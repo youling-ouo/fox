@@ -1,0 +1,3171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小狐狸物語 - 日系電子寵物養成</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #fff9f2;
+      --sakura: #ffb7c5;
+      --sakura-deep: #f472b6;
+      --warm-brown: #5c4338;
+      --tatami: #f2e4ce;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Zen Maru Gothic', 'Inter', sans-serif;
+      background: linear-gradient(160deg, #fff6f8 0%, #fff9f0 55%, #fdf2e9 100%);
+      color: var(--warm-brown);
+      overflow-x: clip;
+      min-height: 100vh;
+    }
+
+    /* Kawaii Japanese Room Stage */
+    .shoji-bg {
+      background:
+        radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.92), rgba(255, 245, 238, 0.72)),
+        linear-gradient(180deg, #fff7f8 0%, #fffaf2 68%, #f1e1c8 68%, #e9d5b5 100%);
+    }
+
+    /* Custom Hand Cursor for Petting Mode */
+    .cursor-hand {
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'><text y='28' font-size='28'>🤚</text></svg>") 16 16, pointer !important;
+    }
+    .cursor-hand .touch-zone:hover {
+      filter: drop-shadow(0 0 6px rgba(244, 114, 182, 0.65));
+    }
+    .touch-zone {
+      cursor: pointer;
+      transition: filter 0.18s ease;
+    }
+
+    /* Falling Sakura Petals */
+    @keyframes sakuraFall {
+      0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.85; }
+      85% { opacity: 0.75; }
+      100% { transform: translateY(420px) translateX(48px) rotate(320deg); opacity: 0; }
+    }
+    .sakura-petal {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle at 30% 30%, #ffe4ec, #ffb3c6);
+      border-radius: 80% 0 80% 0;
+      pointer-events: none;
+      animation: sakuraFall var(--dur, 9s) linear var(--delay, 0s) infinite;
+      opacity: 0;
+    }
+
+    /* Live2D-like SVG Animations (Calm, Serene, Eye-Only Mouse Tracking) */
+    @keyframes foxBreathe {
+      0%, 100% { transform: translateY(0px) scaleY(1); }
+      50% { transform: translateY(-2px) scaleY(1.012); }
+    }
+    @keyframes headBob {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(0.55deg); }
+    }
+    @keyframes earTwitchL {
+      0%, 88%, 100% { transform: rotate(0deg); }
+      91% { transform: rotate(-6deg); }
+      94% { transform: rotate(2deg); }
+      97% { transform: rotate(-3deg); }
+    }
+    @keyframes earTwitchR {
+      0%, 84%, 100% { transform: rotate(0deg); }
+      87% { transform: rotate(6deg); }
+      90% { transform: rotate(-2deg); }
+      93% { transform: rotate(3deg); }
+    }
+    @keyframes earTipFlexL {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-1.5deg); }
+    }
+    @keyframes earTipFlexR {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(1.5deg); }
+    }
+    @keyframes earPerk {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      40% { transform: rotate(var(--ear-perk-rot, -10deg)) scale(1.04); }
+      75% { transform: rotate(calc(var(--ear-perk-rot, -10deg) * -0.25)) scale(0.99); }
+    }
+    @keyframes tailSway {
+      0%, 100% { transform: rotate(var(--tail-rot-a, -3.2deg)) scale(1, 1); }
+      50% { transform: rotate(var(--tail-rot-b, 3.8deg)) scale(1.01, 1.015); }
+    }
+    @keyframes tailTipWave {
+      0%, 100% { transform: rotate(var(--tip-rot-a, -4.2deg)); }
+      50% { transform: rotate(var(--tip-rot-b, 4.8deg)); }
+    }
+    @keyframes tailWagFast {
+      0%, 100% { transform: rotate(-7deg); }
+      50% { transform: rotate(7deg); }
+    }
+    @keyframes hairFlow {
+      0%, 100% { transform: rotate(-0.8deg) scaleX(1); }
+      50% { transform: rotate(0.9deg) scaleX(1.012); }
+    }
+    @keyframes sleeveSwayL {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(1.8deg); }
+    }
+    @keyframes sleeveSwayR {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-1.8deg); }
+    }
+    @keyframes moonOrbFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+    @keyframes butterflyFlutter {
+      0%, 100% { transform: translate(0px, 0px) rotate(-4deg); }
+      50% { transform: translate(4px, -7px) rotate(5deg); }
+    }
+    @keyframes floatUpFade {
+      0% { transform: translate(-50%, 0) scale(0.75); opacity: 0; }
+      20% { opacity: 1; transform: translate(-50%, -12px) scale(1.1); }
+      100% { transform: translate(-50%, -68px) scale(0.95); opacity: 0; }
+    }
+    @keyframes bubbleRise {
+      0% { transform: translateY(0) scale(0.6); opacity: 0; }
+      25% { opacity: 0.9; }
+      100% { transform: translateY(-190px) scale(1.15); opacity: 0; }
+    }
+    @keyframes bounceHappy {
+      0%, 100% { transform: translateY(0) scale(1); }
+      35% { transform: translateY(-14px) scale(1.03, 0.97); }
+      65% { transform: translateY(0) scale(0.97, 1.03); }
+    }
+    @keyframes eatChew {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03, 0.97); }
+    }
+
+    .anim-breathe { transform-origin: 200px 330px; animation: foxBreathe 3.8s ease-in-out infinite; }
+    .anim-head { transform-origin: 200px 214px; animation: headBob 3.8s ease-in-out infinite; }
+    .anim-ear-l { transform-origin: 152px 144px; animation: earTwitchL 6.4s ease-in-out infinite; }
+    .anim-ear-r { transform-origin: 248px 144px; animation: earTwitchR 7.1s ease-in-out infinite; }
+    .anim-ear-tip-l { transform-origin: 118px 128px; animation: earTipFlexL 4.4s ease-in-out infinite; }
+    .anim-ear-tip-r { transform-origin: 282px 128px; animation: earTipFlexR 4.4s ease-in-out 0.6s infinite; }
+    .anim-ear-perk { animation: earPerk 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 2 !important; }
+    .anim-tail { transform-origin: 200px 295px; animation: tailSway var(--tail-dur, 5.2s) ease-in-out infinite; }
+    .anim-tail-tip { transform-origin: 200px 185px; animation: tailTipWave var(--tail-dur, 5.2s) ease-in-out infinite; }
+    .tail-wag-excited { animation: tailWagFast 0.36s ease-in-out 5 !important; }
+    .anim-hair-flow { transform-origin: 200px 150px; animation: hairFlow 5.4s ease-in-out infinite; }
+    .anim-sleeve-l { transform-origin: 174px 226px; animation: sleeveSwayL 4.4s ease-in-out infinite; }
+    .anim-sleeve-r { transform-origin: 226px 226px; animation: sleeveSwayR 4.4s ease-in-out 0.4s infinite; }
+    .anim-bounce-happy { animation: bounceHappy 0.55s ease-in-out 2; }
+    .anim-eat-chew { animation: eatChew 0.28s ease-in-out 5; }
+    .fx-float { animation: floatUpFade 1.25s ease-out forwards; }
+    .fx-bubble { animation: bubbleRise 1.6s ease-out forwards; }
+
+    /* Kawaii Buttons */
+    .kawaii-btn {
+      transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+      box-shadow: 0 4px 0 rgba(92, 67, 56, 0.14);
+    }
+    .kawaii-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+    .kawaii-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(92, 67, 56, 0.14);
+    }
+    .kawaii-btn:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Sticky Pet Stage so it never scrolls away on desktop */
+    @media (min-width: 1024px) {
+      .pet-stage-sticky {
+        position: sticky;
+        top: 1.25rem;
+        align-self: start;
+      }
+    }
+  </style>
+</head>
+<body class="pb-10">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="max-w-6xl mx-auto px-3 sm:px-6 pt-4 pb-3 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2.5">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-300 to-pink-300 flex items-center justify-center shadow-sm text-xl border-2 border-white">
+        🦊
+      </div>
+      <div>
+        <h1 class="text-lg sm:text-xl font-black tracking-wide text-[#5c4338] leading-tight">小狐狸物語</h1>
+        <p class="text-[11px] sm:text-xs text-[#8f6e60] font-semibold">日系狐狸電子寵物養成</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="openCustomizeModal()" class="kawaii-btn px-3 py-2 rounded-2xl bg-gradient-to-r from-pink-100 to-orange-100 border-2 border-pink-200 text-xs sm:text-sm font-bold text-[#6e4537] flex items-center gap-1.5">
+        🎨 自訂外觀
+      </button>
+      <button onclick="openSaveModal()" class="kawaii-btn px-3 py-2 rounded-2xl bg-white border-2 border-amber-200 text-xs sm:text-sm font-bold text-[#6e4537] flex items-center gap-1.5">
+        ☁️ 存檔備份
+      </button>
+      <button onclick="toggleTimeMachine()" class="kawaii-btn px-3 py-2 rounded-2xl bg-purple-100 border-2 border-purple-200 text-xs sm:text-sm font-bold text-purple-800 flex items-center gap-1.5">
+        ⏳ 時光機
+      </button>
+      <button id="btn-mute" onclick="toggleSound()" class="kawaii-btn px-2.5 py-2 rounded-2xl bg-white border-2 border-pink-100 text-xs sm:text-sm font-bold text-[#6e4537]" title="開關音效">
+        🔊
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= COLLAPSIBLE TIME MACHINE BAR ================= -->
+  <section id="time-machine-panel" class="hidden max-w-6xl mx-auto px-3 sm:px-6 mb-3">
+    <div class="bg-purple-50/95 border-2 border-purple-200 rounded-3xl p-3 sm:p-4 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+        <span class="text-xs sm:text-sm font-black text-purple-900">⏳ 時光機測試工具（快速測試衰減、冷卻與進化）</span>
+        <button onclick="toggleTimeMachine()" class="text-xs font-bold text-purple-600 hover:underline">收合 ✕</button>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="tmAdvanceHours(1)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-purple-800">+1 小時</button>
+        <button onclick="tmAdvanceHours(3)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-purple-800">+3 小時</button>
+        <button onclick="tmAdvanceHours(12)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-purple-800">+12 小時</button>
+        <button onclick="tmAdvanceHours(24)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-white border border-purple-200 text-xs font-bold text-purple-800">+24 小時</button>
+        <button onclick="tmAdvanceHours(72)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">+72 小時</button>
+        <button onclick="tmResetCooldowns()" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-700">重置冷卻</button>
+        <button onclick="tmAddIntimacy(20)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-pink-50 border border-pink-200 text-xs font-bold text-pink-700">親密度 +20%</button>
+        <button onclick="tmAddFeeds(5)" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800">餵食經驗 +5</button>
+        <button onclick="tmJumpNineTails()" class="kawaii-btn px-2.5 py-1.5 rounded-xl bg-orange-100 border border-orange-300 text-xs font-bold text-orange-900">跳至九尾 🦊</button>
+        <button onclick="tmJumpFoxGirl()" class="kawaii-btn px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-400 to-purple-500 text-white text-xs font-black shadow-sm">跳至九尾狐娘 🌸</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN TWO-COLUMN LAYOUT ================= -->
+  <main class="max-w-6xl mx-auto px-3 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- LEFT: STICKY INTERACTIVE PET STAGE -->
+    <section class="lg:col-span-7 pet-stage-sticky">
+      <div id="pet-stage-card" class="relative shoji-bg rounded-[2rem] border-4 border-white shadow-xl overflow-hidden select-none">
+        <!-- Falling Sakura Layer -->
+        <div id="sakura-layer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+        <!-- Japanese Round Shoji Window Decoration -->
+        <svg class="absolute top-6 left-1/2 -translate-x-1/2 w-56 h-44 opacity-50 pointer-events-none" viewBox="0 0 220 180">
+          <path d="M20 165 L20 100 A90 90 0 0 1 200 100 L200 165 Z" fill="#fffaf4" stroke="#d8c3ad" stroke-width="4"/>
+          <line x1="20" y1="88" x2="200" y2="88" stroke="#e2cfb9" stroke-width="2.5"/>
+          <line x1="20" y1="128" x2="200" y2="128" stroke="#e2cfb9" stroke-width="2.5"/>
+          <line x1="80" y1="15" x2="80" y2="165" stroke="#e2cfb9" stroke-width="2.5"/>
+          <line x1="140" y1="15" x2="140" y2="165" stroke="#e2cfb9" stroke-width="2.5"/>
+        </svg>
+
+        <!-- Sakura Branch Top Right -->
+        <svg class="absolute top-0 right-0 w-40 h-24 pointer-events-none opacity-85" viewBox="0 0 160 90">
+          <path d="M160 8 Q115 24 65 36" fill="none" stroke="#8b6252" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="132" cy="18" r="10" fill="#ffd1dc"/>
+          <circle cx="105" cy="28" r="8" fill="#ffb7c5"/>
+          <circle cx="80" cy="34" r="11" fill="#ffd9e2"/>
+          <circle cx="62" cy="37" r="6" fill="#ffb7c5"/>
+        </svg>
+
+        <!-- Top Left Name & Evolution Badge -->
+        <div class="relative z-20 p-4 flex items-center justify-between gap-2">
+          <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur px-3.5 py-1.5 rounded-full border-2 border-pink-100 shadow-sm">
+            <span id="pet-name-display" class="font-black text-sm sm:text-base text-[#5c4338]">小稻荷</span>
+            <button onclick="openRenameModal()" class="text-xs hover:scale-110 transition" title="修改名字">✏️</button>
+            <span class="text-pink-200">|</span>
+            <span id="pet-stage-badge" class="text-xs sm:text-sm font-black text-pink-500">1 尾</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <div id="warning-pill" class="hidden bg-rose-500 text-white text-xs font-black px-3 py-1.5 rounded-full shadow animate-pulse">
+              ⚠️ 狀態危急
+            </div>
+            <button onclick="toggleStageZoomPanel()" class="kawaii-btn bg-white/90 backdrop-blur px-3 py-1.5 rounded-full border-2 border-pink-100 text-xs font-black text-[#5c4338] shadow-sm" title="自行調整視窗與角色大小">
+              🔍 縮放
+            </button>
+          </div>
+        </div>
+
+        <!-- Floating User-Adjustable Stage & Character Zoom Panel -->
+        <div id="stage-zoom-panel" class="hidden absolute top-14 right-3 z-40 w-60 bg-white/95 backdrop-blur border-2 border-pink-200 rounded-2xl p-3 shadow-xl space-y-2.5 text-xs">
+          <div class="flex items-center justify-between border-b border-pink-100 pb-1.5">
+            <span class="font-black text-[#5c4338]">🔍 視窗與角色縮放</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="resetStageTransform()" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100">重置</button>
+              <button onclick="toggleStageZoomPanel(false)" class="text-gray-400 hover:text-gray-600 font-black">✕</button>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between font-bold text-[#6e4537] mb-0.5">
+              <span>🪟 舞台視窗高度</span>
+              <span id="zoom-stage-h-val">420px</span>
+            </div>
+            <input id="zoom-stage-h" type="range" min="300" max="680" step="10" value="420" oninput="updateStageTransformFromUI()" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+          <div>
+            <div class="flex justify-between font-bold text-[#6e4537] mb-0.5">
+              <span>🦊 角色縮放大小</span>
+              <span id="zoom-char-scale-val">100%</span>
+            </div>
+            <input id="zoom-char-scale" type="range" min="50" max="180" step="5" value="100" oninput="updateStageTransformFromUI()" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+          <div>
+            <div class="flex justify-between font-bold text-[#6e4537] mb-0.5">
+              <span>↕️ 角色上下位置</span>
+              <span id="zoom-char-y-val">0px</span>
+            </div>
+            <input id="zoom-char-y" type="range" min="-120" max="120" step="5" value="0" oninput="updateStageTransformFromUI()" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+          <div>
+            <div class="flex justify-between font-bold text-[#6e4537] mb-0.5">
+              <span>🌀 AI 尾巴大小</span>
+              <span id="zoom-tail-scale-val">100%</span>
+            </div>
+            <input id="zoom-tail-scale" type="range" min="50" max="160" step="5" value="100" oninput="updateStageTransformFromUI()" class="w-full accent-purple-500 cursor-pointer" />
+          </div>
+        </div>
+
+        <!-- Speech Bubble -->
+        <div class="relative z-20 px-4 flex justify-center">
+          <div id="speech-bubble" class="bg-white/95 backdrop-blur border-2 border-pink-200 rounded-3xl px-4 py-2 text-xs sm:text-sm font-bold text-[#5c4338] shadow-sm max-w-md text-center transition-all duration-200">
+            嗚呼～初次見面主人！請多多照顧我喔！🦊✨
+          </div>
+        </div>
+
+        <!-- Petting Mode Banner -->
+        <div id="petting-banner" class="hidden relative z-20 mt-2 flex justify-center">
+          <div class="bg-pink-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow flex items-center gap-2">
+            <span>🤚 觸摸模式啟動中：點擊耳朵、頭、身體、尾巴或腳掌！</span>
+            <button onclick="togglePettingMode(false)" class="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-[11px]">結束</button>
+          </div>
+        </div>
+
+        <!-- Center Interactive Pet Stage -->
+        <div id="pet-interactive-area" class="relative z-10 w-full min-h-[370px] h-[370px] sm:h-[420px] flex items-center justify-center transition-all duration-300">
+          <!-- Zabuton Cushion -->
+          <div class="absolute bottom-6 w-52 sm:w-60 h-14 rounded-full bg-gradient-to-b from-pink-300 to-pink-400 border-4 border-pink-100 shadow-md opacity-90 pointer-events-none"></div>
+
+          <!-- Floating FX Layer (Food, Ball, Hearts, Bubbles) -->
+          <div id="fx-overlay" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
+
+          <!-- Built-in Live2D SVG Pet -->
+          <svg id="fox-svg" viewBox="-35 -35 470 445" class="w-[350px] h-[350px] sm:w-[405px] sm:h-[405px] relative z-10 overflow-visible">
+            <defs>
+              <filter id="soft-shadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#5c4338" flood-opacity="0.14"/>
+              </filter>
+              <!-- 100% Opaque Fur-to-White Gradient for Xinzoruo-style Chibi Fox (No see-through!) -->
+              <linearGradient id="fox-fur-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop id="fox-fur-grad-top" offset="0%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop id="fox-fur-grad-mid" offset="54%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop offset="86%" stop-color="#fffaf5" stop-opacity="1"/>
+                <stop offset="100%" stop-color="#fffaf5" stop-opacity="1"/>
+              </linearGradient>
+              <linearGradient id="fox-ear-grad-l" x1="0" y1="0" x2="1" y2="1">
+                <stop id="fox-ear-grad-l-stop" offset="0%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop id="fox-ear-grad-l-mid" offset="74%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop offset="100%" stop-color="#fffaf5" stop-opacity="1"/>
+              </linearGradient>
+              <linearGradient id="fox-ear-grad-r" x1="1" y1="0" x2="0" y2="1">
+                <stop id="fox-ear-grad-r-stop" offset="0%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop id="fox-ear-grad-r-mid" offset="74%" stop-color="#f28c38" stop-opacity="1"/>
+                <stop offset="100%" stop-color="#fffaf5" stop-opacity="1"/>
+              </linearGradient>
+              <!-- Clip Paths for Custom Patches on Fox -->
+              <clipPath id="fox-body-clip">
+                <path d="M154 206 C142 238, 134 294, 148 326 C160 342, 240 342, 252 326 C266 294, 258 238, 246 206 Z"/>
+              </clipPath>
+              <clipPath id="fox-head-clip">
+                <path d="M132 174 C132 126, 162 110, 200 110 C238 110, 268 126, 268 174 C266 206, 236 220, 200 220 C164 220, 134 206, 132 174 Z"/>
+              </clipPath>
+              <!-- STRICT Eye Clip Paths so pupils NEVER overflow eyelids -->
+              <clipPath id="fox-eye-clip-l">
+                <ellipse cx="174" cy="166" rx="10.5" ry="9"/>
+              </clipPath>
+              <clipPath id="fox-eye-clip-r">
+                <ellipse cx="226" cy="166" rx="10.5" ry="9"/>
+              </clipPath>
+            </defs>
+
+            <!-- ================= FOX FORM (1~9 TAILS, Xinzoruo Chibi Fox Reference) ================= -->
+            <g id="fox-form-group" filter="url(#soft-shadow)">
+              <!-- Dynamic 1~9 Curved Fluffy Tails -->
+              <g id="fox-tails-layer"></g>
+
+              <!-- Breathing Body + Head -->
+              <g id="fox-body-wrapper" class="anim-breathe">
+                <!-- Fluffy White Pear-Shaped Chibi Fox Body (Touch Zone: body) -->
+                <g class="touch-zone" data-part="body" onclick="handleTouchPart('body', event)">
+                  <path id="fox-body-base" d="M156 206 C146 218, 138 228, 148 236 C138 244, 140 256, 146 266 C136 296, 138 324, 154 334 C172 342, 228 342, 246 334 C262 324, 264 296, 254 266 C260 256, 262 244, 252 236 C262 228, 254 218, 244 206 Z" fill="#fffaf5" stroke="#4a3730" stroke-width="3.2" stroke-linejoin="round"/>
+                  <!-- Custom Patches on Body -->
+                  <g id="fox-body-patches" clip-path="url(#fox-body-clip)"></g>
+                  <!-- Soft Fluffy Chest Tuft Accents (Xinzoruo line style) -->
+                  <path d="M174 228 Q186 242 200 232 Q214 242 226 228" fill="none" stroke="#c8b4ab" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                  <path d="M196 276 Q192 284 198 292" fill="none" stroke="#c8b4ab" stroke-width="2" stroke-linecap="round" opacity="0.65"/>
+                </g>
+
+                <!-- Stubby Cute Chibi Arms & Hind Feet (Touch Zone: paws) -->
+                <g class="touch-zone" data-part="paws" onclick="handleTouchPart('paws', event)">
+                  <!-- Left little arm -->
+                  <path id="fox-paw-l" d="M148 242 C132 256, 128 278, 138 286 C146 292, 156 280, 154 264" fill="#f28c38" stroke="#4a3730" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Right little arm -->
+                  <path id="fox-paw-r" d="M252 242 C268 256, 272 278, 262 286 C254 292, 244 280, 246 264" fill="#f28c38" stroke="#4a3730" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Cute standing/sitting feet tipped with fur color -->
+                  <path id="fox-foot-l" d="M168 332 C152 332, 134 334, 132 342 C132 349, 154 350, 178 342 Z" fill="#f28c38" stroke="#4a3730" stroke-width="3" stroke-linejoin="round"/>
+                  <path id="fox-foot-r" d="M232 332 C248 332, 266 334, 268 342 C268 349, 246 350, 222 342 Z" fill="#f28c38" stroke="#4a3730" stroke-width="3" stroke-linejoin="round"/>
+                </g>
+
+                <!-- Seamless Dome Head + Soft Sloped-Down Fluffy Ears (Xinzoruo Reference!) -->
+                <g id="fox-head-wrapper" class="anim-head">
+                  <!-- Left Sloped Fluffy Ear + Diamond Shrine Ornament (Touch Zone: ears) -->
+                  <g class="anim-ear-l touch-zone" style="--ear-perk-rot: -7deg;" data-part="ears" onclick="handleTouchPart('ears', event)">
+                    <g class="anim-ear-tip-l">
+                      <path id="fox-ear-l" d="M156 124 C128 136, 98 156, 76 168 C94 182, 118 182, 146 174 Z" fill="url(#fox-ear-grad-l)" stroke="#4a3730" stroke-width="3.2" stroke-linejoin="round"/>
+                      <!-- Soft inner ear tuft -->
+                      <path d="M138 166 Q116 172 96 168 Q112 158 138 152" fill="#ffd6e0" opacity="0.6"/>
+                      <path d="M142 174 Q130 176 124 170 Q116 178 106 172" fill="none" stroke="#4a3730" stroke-width="2.2" stroke-linecap="round"/>
+                      <!-- Diamond Gold & Purple Shrine Ear Ornament -->
+                      <g transform="translate(114, 174)">
+                        <line x1="0" y1="0" x2="0" y2="6" stroke="#4a3730" stroke-width="1.8"/>
+                        <polygon points="0,5 7,17 0,29 -7,17" fill="#f4c469" stroke="#4a3730" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="0,10 4,17 0,24 -4,17" fill="#6d28d9"/>
+                        <polygon points="0,29 4,35 -4,35" fill="#f4c469" stroke="#4a3730" stroke-width="1.6" stroke-linejoin="round"/>
+                      </g>
+                    </g>
+                  </g>
+
+                  <!-- Right Sloped Fluffy Ear + Diamond Shrine Ornament (Touch Zone: ears) -->
+                  <g class="anim-ear-r touch-zone" style="--ear-perk-rot: 7deg;" data-part="ears" onclick="handleTouchPart('ears', event)">
+                    <g class="anim-ear-tip-r">
+                      <path id="fox-ear-r" d="M244 124 C272 136, 302 156, 324 168 C306 182, 282 182, 254 174 Z" fill="url(#fox-ear-grad-r)" stroke="#4a3730" stroke-width="3.2" stroke-linejoin="round"/>
+                      <!-- Soft inner ear tuft -->
+                      <path d="M262 166 Q284 172 304 168 Q288 158 262 152" fill="#ffd6e0" opacity="0.6"/>
+                      <path d="M258 174 Q270 176 276 170 Q284 178 294 172" fill="none" stroke="#4a3730" stroke-width="2.2" stroke-linecap="round"/>
+                      <!-- Diamond Gold & Purple Shrine Ear Ornament -->
+                      <g transform="translate(286, 174)">
+                        <line x1="0" y1="0" x2="0" y2="6" stroke="#4a3730" stroke-width="1.8"/>
+                        <polygon points="0,5 7,17 0,29 -7,17" fill="#f4c469" stroke="#4a3730" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="0,10 4,17 0,24 -4,17" fill="#6d28d9"/>
+                        <polygon points="0,29 4,35 -4,35" fill="#f4c469" stroke="#4a3730" stroke-width="1.6" stroke-linejoin="round"/>
+                      </g>
+                    </g>
+                  </g>
+
+                  <!-- Soft Mochi Head Dome with Smooth Fur-to-White Gradient (Touch Zone: head) -->
+                  <g class="touch-zone" data-part="head" onclick="handleTouchPart('head', event)">
+                    <path id="fox-head-base" d="M134 176 C132 128, 162 110, 200 110 C238 110, 268 128, 266 176 C266 202, 246 218, 224 222 Q200 226 176 222 C154 218, 134 202, 134 176 Z" fill="url(#fox-fur-grad)"/>
+                    <!-- Outer outline open at bottom so head blends seamlessly into fluffy neck -->
+                    <path d="M148 214 C136 204, 132 190, 134 176 C136 130, 162 110, 200 110 C238 110, 264 130, 266 176 C268 190, 264 204, 252 214" fill="none" stroke="#4a3730" stroke-width="3.2" stroke-linecap="round"/>
+                    <!-- Custom Patches on Head -->
+                    <g id="fox-head-patches" clip-path="url(#fox-head-clip)"></g>
+                    <!-- Iconic Tiny White Dot Eyebrows (Xinzoruo signature!) -->
+                    <ellipse cx="182" cy="148" rx="4.2" ry="3.2" fill="#fffaf5" opacity="0.92"/>
+                    <ellipse cx="218" cy="148" rx="4.2" ry="3.2" fill="#fffaf5" opacity="0.92"/>
+                    <!-- Soft Rosy Blush -->
+                    <ellipse cx="156" cy="182" rx="11" ry="5.5" fill="#ff9eb5" opacity="0.52"/>
+                    <ellipse cx="244" cy="182" rx="11" ry="5.5" fill="#ff9eb5" opacity="0.52"/>
+                    <!-- Cute Tiny Triangle Nose -->
+                    <path d="M196.5 172 L203.5 172 L200 176.5 Z" fill="#3a2822" stroke="#3a2822" stroke-width="1.2" stroke-linejoin="round"/>
+                  </g>
+
+                  <!-- Fox Eyes: Normal (Expressive Cute Chibi Eyes, Strictly Clipped!) -->
+                  <g id="fox-eyes-normal" pointer-events="none">
+                    <ellipse cx="174" cy="166" rx="10.5" ry="9" fill="#3a2822"/>
+                    <ellipse cx="226" cy="166" rx="10.5" ry="9" fill="#3a2822"/>
+                    <g clip-path="url(#fox-eye-clip-l)">
+                      <g class="eye-pupil">
+                        <circle cx="175" cy="165" r="4.5" fill="#a855f7" opacity="0.52"/>
+                        <circle cx="177" cy="162.5" r="3.2" fill="#ffffff"/>
+                        <circle cx="170" cy="169" r="1.6" fill="#ffffff" opacity="0.88"/>
+                      </g>
+                    </g>
+                    <g clip-path="url(#fox-eye-clip-r)">
+                      <g class="eye-pupil">
+                        <circle cx="227" cy="165" r="4.5" fill="#a855f7" opacity="0.52"/>
+                        <circle cx="229" cy="162.5" r="3.2" fill="#ffffff"/>
+                        <circle cx="222" cy="169" r="1.6" fill="#ffffff" opacity="0.88"/>
+                      </g>
+                    </g>
+                  </g>
+                  <!-- Fox Eyes: Happy (Xinzoruo iconic smug/cheerful horizontal squint!) -->
+                  <g id="fox-eyes-happy" class="hidden" pointer-events="none">
+                    <path d="M161 165 Q174 160 186 167" fill="none" stroke="#3a2822" stroke-width="4.2" stroke-linecap="round"/>
+                    <path d="M239 165 Q226 160 214 167" fill="none" stroke="#3a2822" stroke-width="4.2" stroke-linecap="round"/>
+                  </g>
+                  <!-- Fox Eyes: Blink -->
+                  <g id="fox-eyes-blink" class="hidden" pointer-events="none">
+                    <path d="M163 166 Q174 170 185 166" fill="none" stroke="#3a2822" stroke-width="3.6" stroke-linecap="round"/>
+                    <path d="M215 166 Q226 170 237 166" fill="none" stroke="#3a2822" stroke-width="3.6" stroke-linecap="round"/>
+                  </g>
+                  <!-- Fox Eyes: Contempt (Small Ball) -->
+                  <g id="fox-eyes-contempt" class="hidden" pointer-events="none">
+                    <path d="M161 162 L187 166" stroke="#3a2822" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M166 164 A8 6.5 0 0 0 182 166 Z" fill="#3a2822"/>
+                    <path d="M213 166 L239 162" stroke="#3a2822" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M218 166 A8 6.5 0 0 0 234 164 Z" fill="#3a2822"/>
+                  </g>
+                  <!-- Fox Eyes: Tired (Large Ball) -->
+                  <g id="fox-eyes-tired" class="hidden" pointer-events="none">
+                    <path d="M164 160 L181 166 L164 172" fill="none" stroke="#3a2822" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M236 160 L219 166 L236 172" fill="none" stroke="#3a2822" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+
+                  <!-- Fox Mouths (Petite :3 / ω mouth right below nose) -->
+                  <g id="fox-mouth-normal" pointer-events="none">
+                    <path d="M191 180 Q195.5 186 200 180.5 Q204.5 186 209 180" fill="none" stroke="#3a2822" stroke-width="2.6" stroke-linecap="round"/>
+                  </g>
+                  <g id="fox-mouth-open" class="hidden" pointer-events="none">
+                    <path d="M192 179 Q200 202 208 179 Z" fill="#f47292" stroke="#3a2822" stroke-width="2.5" stroke-linejoin="round"/>
+                  </g>
+                  <g id="fox-mouth-flat" class="hidden" pointer-events="none">
+                    <path d="M192 183 L208 183" stroke="#3a2822" stroke-width="2.6" stroke-linecap="round"/>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </svg>
+
+          <!-- AI Modular Live2D Canvas Container (Hidden until generated) -->
+          <div id="ai-25d-container" class="hidden relative w-[360px] h-[360px] sm:w-[410px] sm:h-[410px] max-w-full z-10 flex items-center justify-center overflow-visible transition-all duration-300">
+            <canvas id="ai-25d-canvas" width="640" height="640" class="w-full h-full object-contain"></canvas>
+            <!-- Invisible Touch Hitboxes over AI Model -->
+            <div class="touch-zone absolute top-[6%] left-[28%] w-[44%] h-[18%]" onclick="handleTouchPart('ears', event)" title="耳朵"></div>
+            <div class="touch-zone absolute top-[22%] left-[34%] w-[32%] h-[18%]" onclick="handleTouchPart('head', event)" title="頭"></div>
+            <div class="touch-zone absolute top-[40%] left-[32%] w-[36%] h-[34%]" onclick="handleTouchPart('body', event)" title="身體"></div>
+            <div class="touch-zone absolute top-[26%] left-[4%] w-[26%] h-[44%]" onclick="handleTouchPart('tail', event)" title="尾巴"></div>
+            <div class="touch-zone absolute top-[26%] right-[4%] w-[26%] h-[44%]" onclick="handleTouchPart('tail', event)" title="尾巴"></div>
+            <div class="touch-zone absolute bottom-[6%] left-[30%] w-[40%] h-[18%]" onclick="handleTouchPart('paws', event)" title="腳掌"></div>
+          </div>
+
+          <!-- Bottom-Right AI Model Controls -->
+          <div id="ai-stage-controls" class="hidden absolute bottom-3 right-3 z-30 flex flex-wrap items-center justify-end gap-1.5">
+            <button id="btn-toggle-explode" onclick="toggle25DExplode()" class="kawaii-btn px-2.5 py-1 rounded-full bg-pink-500 text-white text-[11px] font-bold shadow">🧩 分層</button>
+            <button id="btn-toggle-rig" onclick="toggle25DRigOverlay()" class="kawaii-btn px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold shadow">🦴 變形器</button>
+            <button id="btn-toggle-ai-mode" onclick="toggleAiModelMode()" class="kawaii-btn px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[11px] font-bold shadow">✨ 切換內建/AI</button>
+          </div>
+
+          <!-- Game Over Overlay (Starved / Runaway) -->
+          <div id="gameover-overlay" class="hidden absolute inset-0 bg-[#3a2822]/75 backdrop-blur-sm z-40 flex flex-col items-center justify-center p-6 text-center text-white">
+            <div id="gameover-icon" class="text-5xl mb-3">🥀</div>
+            <h2 id="gameover-title" class="text-2xl font-black mb-2">小狐狸離開了…</h2>
+            <p id="gameover-desc" class="text-sm text-pink-100 max-w-xs mb-5 leading-relaxed"></p>
+            <button onclick="resetPetLife()" class="kawaii-btn px-6 py-2.5 rounded-2xl bg-gradient-to-r from-pink-400 to-orange-400 text-white font-black text-sm shadow-lg">
+              🌸 重新迎接新小狐狸
+            </button>
+          </div>
+        </div>
+
+        <!-- Stage Footer Info -->
+        <div class="relative z-20 mx-3 mb-3 px-4 py-2 rounded-2xl bg-white/85 backdrop-blur border border-pink-100 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#7c5d4e]">
+          <span>🍥 總餵食次數：<strong id="total-feeds-display" class="text-pink-600">0</strong> 次</span>
+          <span>🕒 養成時間：<strong id="age-display">0 小時 0 分</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: STATUS BARS & INTERACTION MODULES -->
+    <section class="lg:col-span-5 space-y-4">
+
+      <!-- Status Card -->
+      <div class="bg-white/90 backdrop-blur rounded-[1.75rem] border-2 border-pink-100 p-4 sm:p-5 shadow-md space-y-3.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm sm:text-base font-black text-[#5c4338] flex items-center gap-1.5">📊 寵物狀態</h2>
+          <span id="status-hint-chip" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">元氣滿滿</span>
+        </div>
+
+        <!-- Hunger -->
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1">
+            <span>🍙 飽食度 <span class="text-[10px] text-[#9b7b6c]">(每小時 -10%｜歸零 72 小時死亡)</span></span>
+            <span id="val-hunger" class="text-orange-600">80%</span>
+          </div>
+          <div class="w-full h-3.5 bg-orange-50 rounded-full overflow-hidden border border-orange-100">
+            <div id="bar-hunger" class="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-300" style="width: 80%"></div>
+          </div>
+          <p id="hunger-death-timer" class="hidden text-[11px] font-bold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Intimacy -->
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1">
+            <span>💖 親密度 <span class="text-[10px] text-[#9b7b6c]">(進化需 ≥80%｜24h 未互動 -10%)</span></span>
+            <span id="val-intimacy" class="text-pink-600">50%</span>
+          </div>
+          <div class="w-full h-3.5 bg-pink-50 rounded-full overflow-hidden border border-pink-100">
+            <div id="bar-intimacy" class="h-full bg-gradient-to-r from-pink-400 to-rose-400 rounded-full transition-all duration-300" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <!-- Cleanliness -->
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1">
+            <span>🫧 清潔度 <span class="text-[10px] text-[#9b7b6c]">(每 12h -30%｜&lt;30% 玩耍不加親密)</span></span>
+            <span id="val-clean" class="text-sky-600">85%</span>
+          </div>
+          <div class="w-full h-3.5 bg-sky-50 rounded-full overflow-hidden border border-sky-100">
+            <div id="bar-clean" class="h-full bg-gradient-to-r from-sky-300 to-cyan-400 rounded-full transition-all duration-300" style="width: 85%"></div>
+          </div>
+          <p id="clean-warn-timer" class="hidden text-[11px] font-bold text-rose-600 mt-1"></p>
+        </div>
+
+        <!-- Evolution EXP -->
+        <div class="pt-1 border-t border-pink-100">
+          <div class="flex justify-between text-xs font-bold mb-1">
+            <span id="exp-label">✨ 升級經驗（往 2 尾）</span>
+            <span id="val-exp" class="text-purple-600">0 / 10</span>
+          </div>
+          <div class="w-full h-3.5 bg-purple-50 rounded-full overflow-hidden border border-purple-100">
+            <div id="bar-exp" class="h-full bg-gradient-to-r from-purple-400 via-fuchsia-400 to-pink-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p id="exp-sub-hint" class="text-[11px] text-[#8f6e60] mt-1 font-medium"></p>
+          <button id="btn-trigger-evolve-fg" onclick="openEvolveFoxGirlModal()" class="hidden kawaii-btn mt-2 w-full py-2 rounded-2xl bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-500 text-white text-xs font-black shadow">
+            🌸 隨時進化為「九尾狐娘」（開啟 AI 生成）
+          </button>
+        </div>
+      </div>
+
+      <!-- Interaction Modules Card -->
+      <div class="bg-white/90 backdrop-blur rounded-[1.75rem] border-2 border-pink-100 p-4 sm:p-5 shadow-md">
+        <!-- Module Tabs -->
+        <div class="grid grid-cols-3 gap-2 mb-4 bg-orange-50/70 p-1.5 rounded-2xl border border-orange-100">
+          <button id="tab-feed" onclick="switchActionTab('feed')" class="py-2 rounded-xl text-xs sm:text-sm font-black bg-white text-orange-600 shadow-sm transition">🍱 餵食</button>
+          <button id="tab-play" onclick="switchActionTab('play')" class="py-2 rounded-xl text-xs sm:text-sm font-black text-[#8f6e60] hover:bg-white/60 transition">🎀 玩耍</button>
+          <button id="tab-bath" onclick="switchActionTab('bath')" class="py-2 rounded-xl text-xs sm:text-sm font-black text-[#8f6e60] hover:bg-white/60 transition">🛁 洗澡</button>
+        </div>
+
+        <!-- FEED PANEL -->
+        <div id="panel-feed" class="space-y-3">
+          <div class="flex items-center justify-between text-xs font-bold text-[#7c5d4e] bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">
+            <span>每 3 小時可餵食 3 次（每次飽食 +30%）</span>
+            <span id="feed-quota-text" class="text-orange-600 font-black">剩餘 3 / 3</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5">
+            <!-- Aburaage -->
+            <button onclick="feedPet('aburaage')" id="btn-feed-aburaage" class="kawaii-btn p-3 rounded-2xl bg-gradient-to-b from-amber-50 to-orange-50 border-2 border-amber-200 flex flex-col items-center gap-1.5">
+              <svg class="w-11 h-11" viewBox="0 0 64 64">
+                <path d="M12 42 L32 14 L52 42 Z" fill="#e69a38" stroke="#6b4423" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M18 39 L32 20 L46 39 Z" fill="#f5b858" opacity="0.7"/>
+                <circle cx="28" cy="34" r="1.8" fill="#8c5828"/>
+                <circle cx="36" cy="31" r="1.6" fill="#8c5828"/>
+                <circle cx="33" cy="37" r="1.5" fill="#8c5828"/>
+              </svg>
+              <span class="text-xs font-black text-[#5c4338]">豆皮</span>
+              <span class="text-[10px] text-orange-600 font-bold">+30% 飽食</span>
+            </button>
+
+            <!-- Fried Tofu -->
+            <button onclick="feedPet('tofu')" id="btn-feed-tofu" class="kawaii-btn p-3 rounded-2xl bg-gradient-to-b from-yellow-50 to-amber-50 border-2 border-amber-200 flex flex-col items-center gap-1.5">
+              <svg class="w-11 h-11" viewBox="0 0 64 64">
+                <rect x="12" y="20" width="40" height="26" rx="6" fill="#d98a36" stroke="#6b4423" stroke-width="3"/>
+                <rect x="16" y="24" width="32" height="16" rx="4" fill="#f3b25a"/>
+                <line x1="22" y1="30" x2="42" y2="30" stroke="#c47425" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="36" x2="39" y2="36" stroke="#c47425" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="text-xs font-black text-[#5c4338]">油豆腐</span>
+              <span class="text-[10px] text-orange-600 font-bold">+30% 飽食</span>
+            </button>
+
+            <!-- Sweet Tamagoyaki (Layered Japanese Rolled Omelette) -->
+            <button onclick="feedPet('tamagoyaki')" id="btn-feed-tamagoyaki" class="kawaii-btn p-3 rounded-2xl bg-gradient-to-b from-yellow-50 to-amber-100/70 border-2 border-yellow-300 flex flex-col items-center gap-1.5">
+              <svg class="w-11 h-11" viewBox="0 0 64 64">
+                <!-- Back golden tamagoyaki piece -->
+                <rect x="10" y="24" width="24" height="22" rx="6" fill="#f5b82e" stroke="#6b4423" stroke-width="2.6"/>
+                <path d="M16 32 Q22 28 28 33 Q24 38 17 36" fill="none" stroke="#c97d1c" stroke-width="2" stroke-linecap="round"/>
+                <!-- Front layered tamagoyaki slice -->
+                <rect x="26" y="20" width="28" height="26" rx="7" fill="#ffd94a" stroke="#6b4423" stroke-width="2.8"/>
+                <path d="M27 24 Q40 21 53 24" fill="none" stroke="#d98a22" stroke-width="3.2" stroke-linecap="round"/>
+                <path d="M32 32 C35 28, 45 28, 47 33 C48 38, 36 40, 34 35 C33 33, 39 32, 41 34" fill="none" stroke="#d98a22" stroke-width="2.1" stroke-linecap="round"/>
+                <!-- Cute nori band -->
+                <rect x="37" y="19" width="6" height="28" rx="1.5" fill="#2d3b2d" opacity="0.85"/>
+              </svg>
+              <span class="text-xs font-black text-[#5c4338]">甜玉子燒</span>
+              <span class="text-[10px] text-orange-600 font-bold">+30% 飽食</span>
+            </button>
+          </div>
+          <p id="feed-cooldown-hint" class="text-[11px] text-center text-[#8f6e60] font-semibold"></p>
+        </div>
+
+        <!-- PLAY PANEL -->
+        <div id="panel-play" class="hidden space-y-3">
+          <div class="flex items-center justify-between text-xs font-bold text-[#7c5d4e] bg-pink-50 px-3 py-2 rounded-xl border border-pink-100">
+            <span>每 3 小時可玩耍 10 次（每次親密度 +1%）</span>
+            <span id="play-quota-text" class="text-pink-600 font-black">剩餘 10 / 10</span>
+          </div>
+
+          <!-- Touch Interaction -->
+          <div class="p-3 rounded-2xl bg-pink-50/60 border border-pink-100 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs sm:text-sm font-black text-[#5c4338]">🤚 觸摸小狐狸</div>
+              <div class="text-[11px] text-[#8f6e60]">開啟後點擊耳朵、頭、身體、尾巴、腳掌會有專屬反應</div>
+            </div>
+            <button id="btn-petting-toggle" onclick="togglePettingMode()" class="kawaii-btn shrink-0 px-3.5 py-2 rounded-xl bg-pink-400 text-white text-xs font-black">
+              開始觸摸
+            </button>
+          </div>
+
+          <!-- Throw Ball -->
+          <div class="p-3 rounded-2xl bg-sky-50/60 border border-sky-100 space-y-2">
+            <div class="text-xs sm:text-sm font-black text-[#5c4338]">🥎 丟球遊戲（選擇丟球力道）</div>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="throwBall('small')" id="btn-ball-small" class="kawaii-btn py-2 px-2 rounded-xl bg-white border-2 border-sky-200 text-xs font-black text-sky-700">
+                🤏 小力<div class="text-[10px] font-medium text-gray-500">鄙視眼神</div>
+              </button>
+              <button onclick="throwBall('medium')" id="btn-ball-medium" class="kawaii-btn py-2 px-2 rounded-xl bg-gradient-to-b from-sky-400 to-blue-400 border-2 border-sky-300 text-xs font-black text-white">
+                👌 中力<div class="text-[10px] font-medium text-sky-50">剛剛好！</div>
+              </button>
+              <button onclick="throwBall('large')" id="btn-ball-large" class="kawaii-btn py-2 px-2 rounded-xl bg-white border-2 border-orange-200 text-xs font-black text-orange-700">
+                💪 大力<div class="text-[10px] font-medium text-gray-500">撿到累垮</div>
+              </button>
+            </div>
+          </div>
+          <p id="play-cooldown-hint" class="text-[11px] text-center text-[#8f6e60] font-semibold"></p>
+        </div>
+
+        <!-- BATH PANEL -->
+        <div id="panel-bath" class="hidden space-y-3">
+          <div class="p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-cyan-50 border-2 border-sky-100 text-center space-y-2.5">
+            <div class="text-3xl">🛁🫧</div>
+            <div class="text-sm font-black text-[#5c4338]">香噴噴和風泡泡浴</div>
+            <p class="text-xs text-[#7c5d4e]">一次將清潔度恢復至 <strong>100%</strong>，每 10 小時可洗一次。</p>
+            <button id="btn-bath-action" onclick="bathPet()" class="kawaii-btn w-full py-2.5 rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 text-white font-black text-sm">
+              🫧 幫小狐狸洗澡
+            </button>
+            <p id="bath-cooldown-hint" class="text-[11px] font-bold text-sky-700"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Rules Guide -->
+      <div class="bg-white/75 rounded-3xl border border-pink-100 p-3.5 text-[11px] text-[#856556] space-y-1 leading-relaxed">
+        <div class="font-black text-[#5c4338] text-xs mb-1">📜 養成小筆記</div>
+        <p>• 進化條件：經驗條滿且親密度 <strong>≥ 80%</strong>，每級餵食需求為上一級的 1.2 倍（四捨五入），從 1 尾成長至 9 尾。</p>
+        <p>• 隱藏最終進化：達 9 尾後經驗條維持滿值，後台累積達升九尾次數的兩倍（70 次）即化為 <strong>九尾狐娘</strong>！</p>
+        <p>• 清潔度 &lt;30% 時玩耍不加親密度；≤5% 時每小時親密度 -1%；親密度與清潔度同時歸零 24 小時會離家出走。</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= CUSTOMIZE MODAL (FUR, PATCHES, AI MODULAR LIVE2D) ================= -->
+  <div id="customize-modal" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-[#fffaf5] border-4 border-white rounded-[2rem] shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="px-5 py-3.5 bg-gradient-to-r from-pink-100 to-orange-100 flex items-center justify-between border-b border-pink-200">
+        <h3 class="text-base sm:text-lg font-black text-[#5c4338]">🎨 狐狸外觀工坊</h3>
+        <button onclick="closeCustomizeModal()" class="w-8 h-8 rounded-full bg-white text-[#5c4338] font-black shadow-sm hover:scale-105 transition">✕</button>
+      </div>
+
+      <!-- Sub Tabs -->
+      <div class="px-5 pt-3 flex flex-wrap gap-2 border-b border-pink-100 pb-2.5 bg-white/70">
+        <button id="ctab-fur" onclick="switchCustomTab('fur')" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black bg-orange-400 text-white shadow-sm">🎨 毛色設定</button>
+        <button id="ctab-patch" onclick="switchCustomTab('patch')" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black bg-orange-50 text-[#6e4537]">🐾 斑塊自訂</button>
+        <button id="ctab-ai" onclick="switchCustomTab('ai')" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black bg-purple-50 text-purple-700">✨ 獨立拆件 Live2D 生成</button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto flex-1">
+        <!-- TAB 1: FUR COLOR -->
+        <div id="cpanel-fur" class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+          <div class="flex flex-col items-center bg-white rounded-3xl p-4 border-2 border-pink-100">
+            <svg id="preview-fur-svg" viewBox="0 0 400 400" class="w-52 h-52"></svg>
+            <p class="text-[11px] text-[#8f6e60] mt-1 font-semibold">即時毛色預覽</p>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-black text-[#5c4338] mb-2">基礎毛色快捷選擇</label>
+              <div id="fur-presets" class="grid grid-cols-4 gap-2"></div>
+            </div>
+            <div class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-pink-100">
+              <input id="fur-color-picker" type="color" value="#f28c38" onchange="setFurColor(this.value)" class="w-12 h-10 rounded-xl cursor-pointer border-0 bg-transparent" />
+              <div class="flex-1">
+                <label class="block text-[11px] font-bold text-[#8f6e60]">自訂色碼 (HEX)</label>
+                <input id="fur-hex-input" type="text" value="#f28c38" maxlength="7" oninput="onHexInput(this.value)" class="w-full mt-0.5 px-2.5 py-1 rounded-lg border border-pink-200 text-sm font-mono font-bold text-[#5c4338] uppercase" />
+              </div>
+            </div>
+            <button onclick="randomizeFurColor()" class="kawaii-btn w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-300 text-[#5c4338] font-black text-sm">
+              🎲 隨機生成毛色
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: PATCHES -->
+        <div id="cpanel-patch" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+          <div class="flex flex-col items-center bg-white rounded-3xl p-3 border-2 border-pink-100">
+            <div class="text-[11px] font-bold text-pink-600 mb-1">👇 直接在下方狐狸頭／身體點擊或拖曳手繪斑塊！</div>
+            <svg id="preview-patch-svg" viewBox="0 0 400 400" class="w-60 h-60 cursor-crosshair touch-none"></svg>
+            <div class="flex gap-2 mt-2">
+              <button onclick="undoLastPatch()" class="px-3 py-1 rounded-xl bg-gray-100 text-xs font-bold text-[#5c4338] hover:bg-gray-200">↩️ 復原一筆</button>
+              <button onclick="clearAllPatches()" class="px-3 py-1 rounded-xl bg-rose-50 text-xs font-bold text-rose-600 hover:bg-rose-100">🗑️ 清空斑塊</button>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex items-center justify-between bg-white p-3 rounded-2xl border border-pink-100">
+              <span class="font-black text-[#5c4338]">顯示身上斑塊</span>
+              <input id="patch-enabled-toggle" type="checkbox" checked onchange="togglePatchesEnabled(this.checked)" class="w-5 h-5 accent-pink-500 cursor-pointer" />
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl border border-pink-100 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-[#5c4338]">斑塊顏色</span>
+                <div class="flex items-center gap-2">
+                  <input id="patch-color-picker" type="color" value="#fff5e6" onchange="patchBrush.color=this.value" class="w-8 h-7 rounded cursor-pointer" />
+                  <button onclick="patchBrush.color='#fff5e6';document.getElementById('patch-color-picker').value='#fff5e6'" class="w-5 h-5 rounded-full bg-[#fff5e6] border border-gray-300"></button>
+                  <button onclick="patchBrush.color='#5c4338';document.getElementById('patch-color-picker').value='#5c4338'" class="w-5 h-5 rounded-full bg-[#5c4338] border border-gray-300"></button>
+                  <button onclick="patchBrush.color='#ffb7c5';document.getElementById('patch-color-picker').value='#ffb7c5'" class="w-5 h-5 rounded-full bg-[#ffb7c5] border border-gray-300"></button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-bold text-[#5c4338] mb-1">
+                  <span>斑塊大小</span>
+                  <span id="patch-size-val">14</span>
+                </div>
+                <input id="patch-size-slider" type="range" min="5" max="34" value="14" oninput="patchBrush.size=Number(this.value);document.getElementById('patch-size-val').textContent=this.value" class="w-full accent-pink-500" />
+              </div>
+
+              <div>
+                <div class="font-bold text-[#5c4338] mb-1.5">斑塊形狀</div>
+                <div class="grid grid-cols-5 gap-1.5">
+                  <button onclick="setPatchShape('circle')" data-shape="circle" class="patch-shape-btn py-1.5 rounded-xl bg-pink-500 text-white font-bold">● 圓</button>
+                  <button onclick="setPatchShape('heart')" data-shape="heart" class="patch-shape-btn py-1.5 rounded-xl bg-pink-50 text-[#5c4338] font-bold">♥ 心</button>
+                  <button onclick="setPatchShape('star')" data-shape="star" class="patch-shape-btn py-1.5 rounded-xl bg-pink-50 text-[#5c4338] font-bold">★ 星</button>
+                  <button onclick="setPatchShape('diamond')" data-shape="diamond" class="patch-shape-btn py-1.5 rounded-xl bg-pink-50 text-[#5c4338] font-bold">◆ 菱</button>
+                  <button onclick="setPatchShape('freehand')" data-shape="freehand" class="patch-shape-btn py-1.5 rounded-xl bg-pink-50 text-[#5c4338] font-bold">✏️ 筆</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl border border-pink-100 space-y-2">
+              <div class="font-bold text-[#5c4338]">基礎斑塊模板</div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <button onclick="applyPatchTemplate('spots')" class="py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 font-bold text-[#5c4338]">🌸 臉頰點點</button>
+                <button onclick="applyPatchTemplate('star')" class="py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 font-bold text-[#5c4338]">⭐ 額頭星印</button>
+                <button onclick="applyPatchTemplate('calico')" class="py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 font-bold text-[#5c4338]">🐱 三花斑紋</button>
+                <button onclick="applyPatchTemplate('heart')" class="py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 font-bold text-[#5c4338]">💖 胸口愛心</button>
+              </div>
+              <div class="flex items-center gap-2 pt-1">
+                <label class="font-bold text-[#5c4338] shrink-0">隨機數量</label>
+                <input id="patch-random-count" type="number" min="1" max="20" value="6" class="w-16 px-2 py-1 rounded-lg border border-pink-200 text-center font-bold" />
+                <button onclick="randomizePatches()" class="kawaii-btn flex-1 py-1.5 rounded-xl bg-gradient-to-r from-pink-400 to-orange-400 text-white font-black">🎲 隨機生成</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: AI MODULAR LIVE2D GENERATOR -->
+        <div id="cpanel-ai" class="hidden space-y-4">
+          <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-4 space-y-3">
+            <div class="flex items-start gap-2.5">
+              <span class="text-2xl">✨</span>
+              <div>
+                <h4 class="text-sm font-black text-purple-900">Gemini 無縫角色 × 獨立多尾 Live2D 生成</h4>
+                <p class="text-xs text-purple-800/80 leading-relaxed mt-0.5">
+                  會生成<strong>「完整無縫角色本體（頭頸完全自然連接、嚴格不畫尾巴）」</strong>與<strong>「獨立雲朵大尾（於背後動態展開 1～9 尾自然搖曳）」</strong>，組裝成專屬的動態外觀！
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="setAiStylePrompt('華麗夢幻靛藍金邊振袖和服，飄逸波浪長髮，優雅狐耳與雲朵般彎曲蓬鬆毛尾')" class="px-2.5 py-1 rounded-full bg-white border border-purple-200 text-[11px] font-bold text-purple-700 hover:bg-purple-100">🌙 夢幻月華振袖風</button>
+              <button onclick="setAiStylePrompt('優雅紅白神社巫女振袖和服，櫻花金飾耳墜，溫柔狡黠的日系狐仙氣質')" class="px-2.5 py-1 rounded-full bg-white border border-purple-200 text-[11px] font-bold text-purple-700 hover:bg-purple-100">⛩️ 櫻花神社巫女風</button>
+              <button onclick="setAiStylePrompt('軟萌 Q 版糰子小狐狸風格，寬大垂墜毛耳配紫金神社耳墜，蓬鬆圍脖絨毛與彎曲大尾巴')" class="px-2.5 py-1 rounded-full bg-white border border-purple-200 text-[11px] font-bold text-purple-700 hover:bg-purple-100">🦊 軟萌糰子小狐風</button>
+            </div>
+
+            <textarea id="ai-style-input" rows="2" class="w-full rounded-xl border-2 border-purple-200 p-2.5 text-xs font-semibold text-[#5c4338] focus:outline-none focus:border-purple-400" placeholder="輸入想要的日系風格描述...">華麗夢幻靛藍金邊振袖和服，溫柔優雅的日系狐仙氣質，修長毛茸狐耳，雲朵般自然彎曲的蓬鬆毛尾</textarea>
+
+            <label class="flex items-center gap-2 text-xs font-bold text-purple-900 cursor-pointer">
+              <input id="ai-consent-checkbox" type="checkbox" checked class="w-4 h-4 accent-purple-600" />
+              <span>我同意呼叫 Gemini 模型依據目前狐狸毛色、尾巴數量／型態生成專屬獨立部件 Live2D 模型</span>
+            </label>
+
+            <details id="ai-key-details" class="bg-white/80 rounded-xl border border-purple-200 px-3 py-2 text-xs">
+              <summary class="cursor-pointer font-bold text-purple-800 select-none">🔑 進階設定：自訂 Gemini API Key（預設免填，遇 401 錯誤時可填入）</summary>
+              <div class="mt-2 flex items-center gap-2">
+                <input id="ai-custom-apikey" type="password" placeholder="貼上 AIza... 開頭的 Gemini API Key（僅存於本機瀏覽器）" class="flex-1 px-2.5 py-1.5 rounded-lg border border-purple-200 text-xs font-mono text-[#5c4338] focus:outline-none focus:border-purple-400" oninput="localStorage.setItem('fox_pet_custom_gemini_key', this.value.trim())" />
+                <button type="button" onclick="document.getElementById('ai-custom-apikey').value='';localStorage.removeItem('fox_pet_custom_gemini_key');showToast('已清除自訂 Key')" class="px-2.5 py-1.5 rounded-lg bg-purple-100 text-purple-700 font-bold hover:bg-purple-200">清除</button>
+              </div>
+            </details>
+
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-generate-ai" onclick="generateModularAiLive2D()" class="kawaii-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs sm:text-sm">
+                🪄 獨立生成各部件並綁骨組裝
+              </button>
+              <button id="btn-clear-ai" onclick="clearAiModel()" class="kawaii-btn px-3.5 py-2.5 rounded-2xl bg-white border border-purple-200 text-purple-700 font-bold text-xs">
+                切回內建
+              </button>
+            </div>
+
+            <div id="ai-loading-box" class="hidden flex items-center gap-2.5 bg-white/90 border border-purple-200 rounded-xl p-3">
+              <div class="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
+              <span id="ai-loading-text" class="text-xs font-bold text-purple-800">正在準備生成獨立部件…</span>
+            </div>
+
+            <!-- Generated Parts Thumbnail Strip -->
+            <div id="ai-parts-preview" class="hidden grid grid-cols-2 gap-2 pt-2">
+              <div class="bg-white rounded-xl p-1.5 border border-purple-100 text-center">
+                <img id="thumb-body" class="w-full h-16 object-contain" alt="完整角色本體"/>
+                <div class="text-[10px] font-bold text-purple-700 mt-1">完整角色本體（無尾）</div>
+              </div>
+              <div class="bg-white rounded-xl p-1.5 border border-purple-100 text-center">
+                <img id="thumb-tail" class="w-full h-16 object-contain" alt="獨立大尾"/>
+                <div class="text-[10px] font-bold text-purple-700 mt-1">獨立大尾 (1~9 尾展開)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-5 py-3 bg-white border-t border-pink-100 flex justify-end">
+        <button onclick="closeCustomizeModal()" class="kawaii-btn px-6 py-2 rounded-2xl bg-gradient-to-r from-pink-400 to-orange-400 text-white font-black text-sm">
+          完成並返回
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SAVE / BACKUP MODAL ================= -->
+  <div id="save-modal" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border-4 border-pink-100 max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-[#5c4338]">☁️ 遊戲進度與雲端硬碟備份</h3>
+        <button onclick="closeSaveModal()" class="text-gray-400 hover:text-gray-600 font-black">✕</button>
+      </div>
+      <p class="text-xs text-[#7c5d4e] leading-relaxed">
+        系統會自動保存你的養成進度。你也可以隨時將進度匯出成 <code>.json</code> 存檔上傳到自己的 Google 雲端硬碟，換裝置時再匯入即可完整復原！
+      </p>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="exportSaveFile()" class="kawaii-btn py-2.5 rounded-2xl bg-amber-100 border border-amber-300 text-xs font-black text-amber-900">📤 匯出存檔 (.json)</button>
+        <label class="kawaii-btn py-2.5 rounded-2xl bg-sky-100 border border-sky-300 text-xs font-black text-sky-900 text-center cursor-pointer">
+          📥 匯入存檔
+          <input type="file" accept=".json" onchange="importSaveFile(event)" class="hidden" />
+        </label>
+      </div>
+      <div class="pt-2 border-t border-pink-100 flex justify-between items-center">
+        <button onclick="confirmHardReset()" class="text-xs font-bold text-rose-500 hover:underline">🗑️ 重置所有進度</button>
+        <button onclick="closeSaveModal()" class="px-4 py-1.5 rounded-xl bg-pink-400 text-white text-xs font-black">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RENAME MODAL ================= -->
+  <div id="rename-modal" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border-4 border-pink-100 max-w-xs w-full p-5 shadow-2xl space-y-3">
+      <h3 class="text-base font-black text-[#5c4338]">✏️ 幫小狐狸取名字</h3>
+      <input id="rename-input" type="text" maxlength="12" class="w-full px-3 py-2 rounded-xl border-2 border-pink-200 font-bold text-sm text-[#5c4338]" />
+      <div class="flex justify-end gap-2">
+        <button onclick="closeRenameModal()" class="px-3 py-1.5 rounded-xl bg-gray-100 text-xs font-bold">取消</button>
+        <button onclick="applyRename()" class="px-4 py-1.5 rounded-xl bg-pink-400 text-white text-xs font-black">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST MESSAGE BOX (NO alert/confirm!) ================= -->
+  <div id="toast-box" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-[#5c4338] text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-xl transition-all"></div>
+
+  <!-- ================= CONFIRM DIALOG (NO confirm()) ================= -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-[70] bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border-4 border-pink-100 max-w-xs w-full p-5 shadow-2xl space-y-4 text-center">
+      <p id="confirm-text" class="text-sm font-bold text-[#5c4338]"></p>
+      <div class="flex justify-center gap-2.5">
+        <button onclick="closeConfirmModal(false)" class="px-4 py-2 rounded-xl bg-gray-100 text-xs font-bold text-[#5c4338]">取消</button>
+        <button onclick="closeConfirmModal(true)" class="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-black">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FOX GIRL EVOLUTION CHOICE MODAL ================= -->
+  <div id="evolve-foxgirl-modal" class="hidden fixed inset-0 z-[65] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-[#fff9fc] to-[#fff5ef] rounded-[2rem] border-4 border-pink-200 max-w-md w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="text-5xl animate-bounce">🌸🦊✨</div>
+      <h3 class="text-lg sm:text-xl font-black text-[#5c4338]">九尾靈力覺醒！即將進化為「九尾狐娘」</h3>
+      <p class="text-xs sm:text-sm text-[#7c5d4e] leading-relaxed">
+        小狐狸已經累積了滿滿的親密度與餵食靈力，可以化為最終型態<strong>「九尾狐娘」</strong>！<br/>
+        請問要現在進入 <strong>AI 生成視窗</strong> 打造專屬的九尾狐娘外觀，還是先維持九尾狐狸的模樣呢？
+      </p>
+      <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+        <button onclick="declineFoxGirlEvolution()" class="kawaii-btn flex-1 py-2.5 px-4 rounded-2xl bg-white border-2 border-pink-200 text-[#6e4537] font-black text-xs sm:text-sm">
+          🦊 暫時不進化
+        </button>
+        <button onclick="acceptFoxGirlEvolution()" class="kawaii-btn flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black text-xs sm:text-sm shadow-md">
+          ✨ 進入 AI 生成視窗
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. CONSTANTS, EVOLUTION TABLE & DEFAULT STATE
+    // =========================================================================
+    const STORAGE_KEY = 'fox_pet_monogatari_v3';
+    const HOUR_MS = 3600 * 1000;
+    const FEED_WINDOW_MS = 3 * HOUR_MS;
+    const FEED_MAX_PER_WINDOW = 3;
+    const PLAY_WINDOW_MS = 3 * HOUR_MS;
+    const PLAY_MAX_PER_WINDOW = 10;
+    const BATH_COOLDOWN_MS = 10 * HOUR_MS;
+    const STARVE_DEATH_HOURS = 72; // 3 days (72 hours) at 0% hunger
+
+    // Evolution feed requirements: 1->2 is 10, each next is Math.round(prev * 1.2)
+    // Index 1 means 1-tail -> 2-tail (10), ..., index 8 means 8-tail -> 9-tail (35)
+    const EXP_REQ_TABLE = (() => {
+      const tbl = { 1: 10 };
+      for (let t = 2; t <= 8; t++) {
+        tbl[t] = Math.round(tbl[t - 1] * 1.2);
+      }
+      return tbl; // {1:10, 2:12, 3:14, 4:17, 5:20, 6:24, 7:29, 8:35}
+    })();
+    const FOX_GIRL_HIDDEN_FEEDS_REQ = EXP_REQ_TABLE[8] * 2; // 70 feeds after reaching 9 tails
+
+    const FUR_PRESETS = [
+      { name: '經典赤狐', hex: '#f28c38' },
+      { name: '櫻花白狐', hex: '#fff2f4' },
+      { name: '奶油杏狐', hex: '#f7c59f' },
+      { name: '焦糖柴狐', hex: '#c87d4b' },
+      { name: '月影銀狐', hex: '#cbd5e1' },
+      { name: '草莓粉狐', hex: '#f9a8d4' },
+      { name: '抹茶和狐', hex: '#a7c99b' },
+      { name: '玄墨夜狐', hex: '#475569' }
+    ];
+
+    function createDefaultState() {
+      const now = Date.now();
+      return {
+        name: '小稻荷',
+        createdAt: now,
+        lastTickAt: now,
+        lastInteractAt: now,
+        hunger: 80,
+        intimacy: 50,
+        cleanliness: 85,
+        tails: 1,              // 1..9
+        isFoxGirl: false,      // Final evolution (AI-generated Fox Girl)
+        canEvolveFoxGirl: false, // True once hidden 9-tail requirement is met
+        stageFeeds: 0,         // Current stage feeds (or hidden post-9-tail feeds)
+        totalFeeds: 0,
+        feedTimestamps: [],    // Timestamps within last 3h
+        playTimestamps: [],    // Timestamps within last 3h
+        lastBathAt: 0,
+        hungerZeroSince: null,
+        bothZeroSince: null,
+        status: 'alive',       // 'alive' | 'dead' | 'runaway'
+        furColor: '#f28c38',
+        patchesEnabled: true,
+        patches: [],           // { target: 'head'|'body', shape, x, y, size, color, points? }
+        useAiLive2D: false,
+        aiParts: null,         // { body, tail } dataURLs
+        aiRig: null,           // Animal form eye rig only
+        stageHeight: 420,      // User-adjustable stage height (px)
+        charScale: 1.0,        // User-adjustable character scale (0.5 ~ 1.8)
+        charOffsetY: 0,        // User-adjustable vertical offset (-120 ~ 120 px)
+        aiTailScale: 1.0       // User-adjustable AI tail scale (0.5 ~ 1.6)
+      };
+    }
+
+    let state = createDefaultState();
+    let isPettingMode = false;
+    let soundEnabled = true;
+    let confirmCallback = null;
+    let pendingFoxGirlEvolve = false;
+    let patchBrush = { color: '#fff5e6', size: 14, shape: 'circle' };
+
+    // =========================================================================
+    // 2. SOUND EFFECTS (Tone.js - No External Audio URLs)
+    // =========================================================================
+    let synth = null;
+    function playTone(notes, duration = '16n') {
+      if (!soundEnabled || typeof Tone === 'undefined') return;
+      try {
+        if (Tone.context.state !== 'running') Tone.start();
+        if (!synth) {
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.01, decay: 0.12, sustain: 0.05, release: 0.25 }
+          }).toDestination();
+          synth.volume.value = -12;
+        }
+        const now = Tone.now();
+        notes.forEach((n, i) => synth.triggerAttackRelease(n, duration, now + i * 0.07));
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('btn-mute').textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) playTone(['C5', 'E5']);
+    }
+
+    // =========================================================================
+    // 3. SAVE / LOAD & TOAST / CONFIRM HELPERS
+    // =========================================================================
+    function saveState() {
+      try {
+        // Avoid blowing up localStorage quota if huge AI images exist
+        const clone = { ...state };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(clone));
+      } catch (e) {
+        try {
+          const lite = { ...state, aiParts: null, useAiLive2D: false };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(lite));
+        } catch (err) {}
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...createDefaultState(), ...parsed };
+        }
+      } catch (e) {
+        state = createDefaultState();
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById('toast-box');
+      if (!box) return;
+      box.textContent = msg;
+      box.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => box.classList.add('hidden'), 2600);
+    }
+
+    function openConfirmModal(text, cb) {
+      document.getElementById('confirm-text').textContent = text;
+      confirmCallback = cb;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+    function closeConfirmModal(ok) {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      if (ok && typeof confirmCallback === 'function') confirmCallback();
+      confirmCallback = null;
+    }
+
+    function setSpeech(msg) {
+      const el = document.getElementById('speech-bubble');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('scale-105');
+      void el.offsetWidth;
+      el.classList.add('scale-105');
+      setTimeout(() => el.classList.remove('scale-105'), 220);
+    }
+
+    // =========================================================================
+    // 4. TIME SIMULATION & DECAY RULES
+    // =========================================================================
+    function simulateElapsedMs(elapsedMs) {
+      if (state.status !== 'alive' || elapsedMs <= 0) return;
+      const hours = elapsedMs / HOUR_MS;
+      const now = state.lastTickAt + elapsedMs;
+
+      // 1) Hunger decays 10% per hour
+      const prevHunger = state.hunger;
+      state.hunger = Math.max(0, state.hunger - hours * 10);
+      if (state.hunger <= 0) {
+        if (!state.hungerZeroSince) {
+          // Estimate exact moment it hit zero
+          const hoursToZero = prevHunger / 10;
+          state.hungerZeroSince = state.lastTickAt + hoursToZero * HOUR_MS;
+        }
+        if (now - state.hungerZeroSince >= STARVE_DEATH_HOURS * HOUR_MS) {
+          state.status = 'dead';
+          state.lastTickAt = now;
+          return;
+        }
+      } else {
+        state.hungerZeroSince = null;
+      }
+
+      // 2) Cleanliness decays 30% every 12 hours (2.5% per hour)
+      state.cleanliness = Math.max(0, state.cleanliness - (hours / 12) * 30);
+
+      // 3) If cleanliness <= 5%, intimacy drops 1% per hour
+      if (state.cleanliness <= 5) {
+        state.intimacy = Math.max(0, state.intimacy - hours * 1);
+      }
+
+      // 4) If no interaction for >= 24h, intimacy drops 10% per 24h
+      const idleMs = now - state.lastInteractAt;
+      if (idleMs >= 24 * HOUR_MS) {
+        const idleDrops = Math.floor(idleMs / (24 * HOUR_MS));
+        state.intimacy = Math.max(0, state.intimacy - idleDrops * 10);
+        state.lastInteractAt += idleDrops * 24 * HOUR_MS;
+      }
+
+      // 5) Both intimacy == 0 and cleanliness == 0 for 24h => runaway
+      if (state.intimacy <= 0 && state.cleanliness <= 0) {
+        if (!state.bothZeroSince) state.bothZeroSince = now;
+        if (now - state.bothZeroSince >= 24 * HOUR_MS) {
+          state.status = 'runaway';
+          state.lastTickAt = now;
+          return;
+        }
+      } else {
+        state.bothZeroSince = null;
+      }
+
+      state.lastTickAt = now;
+    }
+
+    function syncRealTime() {
+      const now = Date.now();
+      const diff = now - state.lastTickAt;
+      if (diff > 1000) {
+        simulateElapsedMs(diff);
+        saveState();
+      }
+      renderUI();
+    }
+
+    // =========================================================================
+    // 5. EVOLUTION LOGIC
+    // =========================================================================
+    function checkEvolution() {
+      if (state.status !== 'alive') return;
+
+      // 1..8 tails -> next tail
+      if (!state.isFoxGirl && state.tails < 9) {
+        const req = EXP_REQ_TABLE[state.tails];
+        if (state.stageFeeds >= req && state.intimacy >= 80) {
+          state.tails += 1;
+          state.stageFeeds = 0;
+          playTone(['C5', 'E5', 'G5', 'C6'], '8n');
+          spawnFloatingFX(['✨', '🌸', '🦊'], 8);
+          setSpeech(`哇啊！！進化成 ${state.tails} 尾狐狸了！謝謝主人的細心照顧！✨🦊`);
+          showToast(`🎉 恭喜進化！目前為 ${state.tails} 尾狐狸！`);
+          renderPetAppearance();
+        }
+      } else if (!state.isFoxGirl && state.tails === 9) {
+        // Hidden final evolution after 9 tails: 2x the feeds required for 8->9 (70 feeds)
+        if (state.stageFeeds >= FOX_GIRL_HIDDEN_FEEDS_REQ && state.intimacy >= 80 && !state.canEvolveFoxGirl) {
+          state.canEvolveFoxGirl = true;
+          playTone(['E5', 'G#5', 'B5', 'E6'], '8n');
+          spawnFloatingFX(['🌸', '✨', '🌙', '🦋'], 12);
+          setSpeech('主人…我的九尾靈力已經圓滿了，隨時可以化為九尾狐娘喔！🌸🦊');
+          openEvolveFoxGirlModal();
+        }
+      }
+    }
+
+    function openEvolveFoxGirlModal() {
+      document.getElementById('evolve-foxgirl-modal').classList.remove('hidden');
+    }
+
+    function declineFoxGirlEvolution() {
+      document.getElementById('evolve-foxgirl-modal').classList.add('hidden');
+      pendingFoxGirlEvolve = false;
+      state.canEvolveFoxGirl = true;
+      saveState();
+      renderUI();
+      setSpeech('沒關係～我會先維持九尾小狐狸陪著主人，想進化時隨時點按鈕喔！🦊💛');
+      showToast('已選擇暫時不進化，隨時可從經驗條下方開啟進化視窗');
+    }
+
+    function acceptFoxGirlEvolution() {
+      document.getElementById('evolve-foxgirl-modal').classList.add('hidden');
+      pendingFoxGirlEvolve = true;
+      openCustomizeModal();
+      switchCustomTab('ai');
+      showToast('✨ 請點擊下方按鈕生成你的專屬九尾狐娘！');
+    }
+
+    // =========================================================================
+    // 6. INTERACTION MODULES (FEED, PLAY, BATH)
+    // =========================================================================
+    function pruneWindow(arr, windowMs) {
+      const cutoff = state.lastTickAt - windowMs;
+      return arr.filter(ts => ts > cutoff);
+    }
+
+    function feedPet(foodType) {
+      if (state.status !== 'alive') return;
+      state.feedTimestamps = pruneWindow(state.feedTimestamps, FEED_WINDOW_MS);
+      if (state.feedTimestamps.length >= FEED_MAX_PER_WINDOW) {
+        setSpeech('肚子還飽飽的，晚點再吃吧～🍡');
+        showToast('每 3 小時最多餵食 3 次喔！');
+        return;
+      }
+
+      state.feedTimestamps.push(state.lastTickAt);
+      state.lastInteractAt = state.lastTickAt;
+      state.hunger = Math.min(100, state.hunger + 30);
+      state.hungerZeroSince = null;
+      state.totalFeeds += 1;
+      state.stageFeeds += 1;
+
+      playTone(['G4', 'B4', 'D5'], '16n');
+      triggerPetExpression('happy', 'open', 1400);
+      triggerBodyAnim('anim-eat-chew', 1300);
+      spawnFoodAnimation(foodType);
+      engine25D.triggerInteract('feed');
+
+      const lines = {
+        aburaage: '喀滋喀滋！香酥的豆皮是狐狸的最愛！🦊💛',
+        tofu: '哇～多汁的油豆腐好好吃喔！幸福滿滿～✨',
+        tamagoyaki: '甜甜嫩嫩的玉子燒！軟綿綿的好喜歡！💛🍱'
+      };
+      setSpeech(lines[foodType] || '好好吃喔！');
+
+      checkEvolution();
+      saveState();
+      renderUI();
+    }
+
+    function togglePettingMode(forceVal) {
+      if (state.status !== 'alive') return;
+      isPettingMode = typeof forceVal === 'boolean' ? forceVal : !isPettingMode;
+      const area = document.getElementById('pet-interactive-area');
+      const banner = document.getElementById('petting-banner');
+      const btn = document.getElementById('btn-petting-toggle');
+      if (isPettingMode) {
+        area.classList.add('cursor-hand');
+        banner.classList.remove('hidden');
+        if (btn) btn.textContent = '結束觸摸';
+        setSpeech('呼嚕～主人要摸哪裡呢？耳朵、頭、身體、尾巴或腳掌都可以喔！🐾');
+      } else {
+        area.classList.remove('cursor-hand');
+        banner.classList.add('hidden');
+        if (btn) btn.textContent = '開始觸摸';
+      }
+    }
+
+    function consumePlayQuota() {
+      state.playTimestamps = pruneWindow(state.playTimestamps, PLAY_WINDOW_MS);
+      if (state.playTimestamps.length >= PLAY_MAX_PER_WINDOW) {
+        setSpeech('玩了好多次有點累了，休息一下再玩吧～💤');
+        showToast('每 3 小時最多玩耍 10 次喔！');
+        return false;
+      }
+      state.playTimestamps.push(state.lastTickAt);
+      state.lastInteractAt = state.lastTickAt;
+
+      // Cleanliness rule: if cleanliness < 30% (and > 5% or <=5%), play does NOT increase intimacy
+      if (state.cleanliness >= 30) {
+        state.intimacy = Math.min(100, state.intimacy + 1);
+      } else {
+        showToast('🫧 清潔度低於 30%，玩耍不會增加親密度喔！先洗澡吧～');
+      }
+      return true;
+    }
+
+    function handleTouchPart(part, ev) {
+      if (state.status !== 'alive') return;
+      if (!isPettingMode) {
+        setSpeech('嗚？想摸我的話，可以切換到「玩耍 → 開始觸摸」喔！🐾');
+        return;
+      }
+      if (!consumePlayQuota()) return;
+
+      playTone(['A4', 'C#5', 'E5'], '16n');
+      engine25D.triggerInteract(part);
+
+      const reactions = {
+        ears: {
+          msg: '呀啊！耳朵好敏感～癢癢的不要一直揉啦！😳✨',
+          expr: 'happy', mouth: 'normal', fx: ['✨', '💕']
+        },
+        head: {
+          msg: '呼嚕嚕…被主人摸頭最舒服了，再多摸一下嘛～💖',
+          expr: 'happy', mouth: 'normal', fx: ['💖', '🌸']
+        },
+        body: {
+          msg: '毛毛是不是很蓬鬆軟綿呀？蹭蹭主人～🦊',
+          expr: 'happy', mouth: 'open', fx: ['🧡', '✨']
+        },
+        tail: {
+          msg: '哇哇！大尾巴被摸到會忍不住搖起來啦！💫',
+          expr: 'happy', mouth: 'open', fx: ['💫', '💖']
+        },
+        paws: {
+          msg: '欸嘿～握握手！肉球軟呼呼的對吧？🐾',
+          expr: 'happy', mouth: 'normal', fx: ['🐾', '💕']
+        }
+      };
+      const r = reactions[part] || reactions.head;
+      setSpeech(r.msg);
+      triggerPetExpression(r.expr, r.mouth, 1400);
+      spawnFloatingFX(r.fx, 4);
+
+      if (part === 'ears') {
+        document.querySelectorAll('.anim-ear-l, .anim-ear-r').forEach(el => {
+          el.classList.remove('anim-ear-perk');
+          void el.offsetWidth;
+          el.classList.add('anim-ear-perk');
+          setTimeout(() => el.classList.remove('anim-ear-perk'), 1200);
+        });
+      } else if (part === 'tail') {
+        document.querySelectorAll('.anim-tail').forEach(el => {
+          el.classList.add('tail-wag-excited');
+          setTimeout(() => el.classList.remove('tail-wag-excited'), 1600);
+        });
+      } else {
+        triggerBodyAnim('anim-bounce-happy', 1100);
+      }
+
+      checkEvolution();
+      saveState();
+      renderUI();
+    }
+
+    function throwBall(power) {
+      if (state.status !== 'alive') return;
+      if (!consumePlayQuota()) return;
+
+      spawnBallAnimation(power);
+      engine25D.triggerInteract('ball-' + power);
+
+      if (power === 'small') {
+        playTone(['E4', 'D4'], '8n');
+        triggerPetExpression('contempt', 'flat', 2200);
+        setSpeech('……這球才滾兩步吧？主人是在敷衍我嗎？😒');
+        spawnFloatingFX(['💧', '💢'], 3);
+      } else if (power === 'medium') {
+        playTone(['C5', 'E5', 'G5'], '16n');
+        triggerPetExpression('happy', 'open', 1800);
+        triggerBodyAnim('anim-bounce-happy', 1200);
+        setSpeech('接到了！這個力道剛剛好，再丟一次嘛！🥎✨');
+        spawnFloatingFX(['⭐', '💖', '✨'], 5);
+      } else {
+        playTone(['G4', 'F4', 'D4'], '8n');
+        triggerPetExpression('tired', 'open', 2400);
+        setSpeech('呼…呼…丟太遠了啦…跑得好累喔…💦');
+        spawnFloatingFX(['💦', '🌀'], 4);
+      }
+
+      checkEvolution();
+      saveState();
+      renderUI();
+    }
+
+    function bathPet() {
+      if (state.status !== 'alive') return;
+      const remain = (state.lastBathAt + BATH_COOLDOWN_MS) - state.lastTickAt;
+      if (state.lastBathAt > 0 && remain > 0) {
+        showToast('還不需要洗澡喔，請等冷卻結束！');
+        return;
+      }
+
+      state.lastBathAt = state.lastTickAt;
+      state.lastInteractAt = state.lastTickAt;
+      state.cleanliness = 100;
+      state.bothZeroSince = null;
+
+      playTone(['C5', 'D5', 'E5', 'G5', 'C6'], '16n');
+      triggerPetExpression('happy', 'open', 2000);
+      triggerBodyAnim('anim-bounce-happy', 1200);
+      spawnBathBubbles();
+      engine25D.triggerInteract('bath');
+      setSpeech('洗完澡香噴噴、毛茸茸的好清爽！🫧✨');
+
+      saveState();
+      renderUI();
+    }
+
+    // =========================================================================
+    // 7. VISUAL FX ANIMATIONS (FOOD, BALL, BUBBLES, FLOATING ICONS)
+    // =========================================================================
+    function spawnFloatingFX(icons, count = 4) {
+      const layer = document.getElementById('fx-overlay');
+      if (!layer) return;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'fx-float absolute text-xl sm:text-2xl pointer-events-none';
+        el.textContent = icons[i % icons.length];
+        el.style.left = `${35 + Math.random() * 30}%`;
+        el.style.top = `${30 + Math.random() * 25}%`;
+        el.style.animationDelay = `${i * 0.08}s`;
+        layer.appendChild(el);
+        setTimeout(() => el.remove(), 1450);
+      }
+    }
+
+    function spawnFoodAnimation(foodType) {
+      const layer = document.getElementById('fx-overlay');
+      if (!layer) return;
+      const svgs = {
+        aburaage: `<svg class="w-12 h-12" viewBox="0 0 64 64"><path d="M12 42 L32 14 L52 42 Z" fill="#e69a38" stroke="#6b4423" stroke-width="3" stroke-linejoin="round"/></svg>`,
+        tofu: `<svg class="w-12 h-12" viewBox="0 0 64 64"><rect x="12" y="20" width="40" height="26" rx="6" fill="#d98a36" stroke="#6b4423" stroke-width="3"/><rect x="16" y="24" width="32" height="16" rx="4" fill="#f3b25a"/></svg>`,
+        tamagoyaki: `<svg class="w-12 h-12" viewBox="0 0 64 64"><rect x="16" y="20" width="32" height="26" rx="7" fill="#ffd94a" stroke="#6b4423" stroke-width="2.8"/><path d="M22 32 C26 27, 38 27, 40 33 C41 38, 28 40, 26 35" fill="none" stroke="#d98a22" stroke-width="2.2" stroke-linecap="round"/><rect x="29" y="19" width="6" height="28" rx="1.5" fill="#2d3b2d"/></svg>`
+      };
+      const el = document.createElement('div');
+      el.className = 'absolute left-1/2 top-[56%] -translate-x-1/2 pointer-events-none transition-all duration-700';
+      el.innerHTML = svgs[foodType] || svgs.aburaage;
+      layer.appendChild(el);
+      requestAnimationFrame(() => {
+        el.style.transform = 'translate(-50%, -40px) scale(0.45)';
+        el.style.opacity = '0';
+      });
+      setTimeout(() => el.remove(), 800);
+      spawnFloatingFX(['💛', '✨'], 3);
+    }
+
+    function spawnBallAnimation(power) {
+      const layer = document.getElementById('fx-overlay');
+      if (!layer) return;
+      const ball = document.createElement('div');
+      ball.textContent = '🥎';
+      ball.className = 'absolute text-3xl pointer-events-none transition-all duration-700 ease-out';
+      ball.style.left = '12%';
+      ball.style.top = '72%';
+      layer.appendChild(ball);
+
+      requestAnimationFrame(() => {
+        if (power === 'small') {
+          ball.style.left = '26%';
+          ball.style.top = '76%';
+        } else if (power === 'medium') {
+          ball.style.left = '66%';
+          ball.style.top = '34%';
+        } else {
+          ball.style.left = '95%';
+          ball.style.top = '10%';
+          ball.style.transform = 'scale(0.5) rotate(540deg)';
+        }
+      });
+      setTimeout(() => {
+        ball.style.opacity = '0';
+        setTimeout(() => ball.remove(), 300);
+      }, 900);
+    }
+
+    function spawnBathBubbles() {
+      const layer = document.getElementById('fx-overlay');
+      if (!layer) return;
+      for (let i = 0; i < 16; i++) {
+        const b = document.createElement('div');
+        b.className = 'fx-bubble absolute rounded-full border-2 border-white/90 bg-sky-200/50 pointer-events-none';
+        const sz = 14 + Math.random() * 24;
+        b.style.width = `${sz}px`;
+        b.style.height = `${sz}px`;
+        b.style.left = `${20 + Math.random() * 60}%`;
+        b.style.bottom = `${10 + Math.random() * 25}%`;
+        b.style.animationDelay = `${Math.random() * 0.55}s`;
+        layer.appendChild(b);
+        setTimeout(() => b.remove(), 2200);
+      }
+    }
+
+    function getActiveLive2DPrefix() {
+      return 'fox';
+    }
+
+    let exprTimer = null;
+    function triggerPetExpression(eyeState, mouthState, duration = 1500) {
+      const p = getActiveLive2DPrefix();
+      ['normal', 'happy', 'blink', 'contempt', 'tired'].forEach(k => {
+        const el = document.getElementById(`${p}-eyes-${k}`);
+        if (el) el.classList.toggle('hidden', k !== eyeState);
+      });
+      ['normal', 'open', 'flat'].forEach(k => {
+        const el = document.getElementById(`${p}-mouth-${k}`);
+        if (el) el.classList.toggle('hidden', k !== mouthState);
+      });
+      clearTimeout(exprTimer);
+      exprTimer = setTimeout(() => {
+        ['normal', 'happy', 'blink', 'contempt', 'tired'].forEach(k => {
+          const el = document.getElementById(`${p}-eyes-${k}`);
+          if (el) el.classList.toggle('hidden', k !== 'normal');
+        });
+        ['normal', 'open', 'flat'].forEach(k => {
+          const el = document.getElementById(`${p}-mouth-${k}`);
+          if (el) el.classList.toggle('hidden', k !== 'normal');
+        });
+      }, duration);
+    }
+
+    function triggerBodyAnim(cls, duration = 1100) {
+      const target = document.getElementById('fox-body-wrapper');
+      if (!target) return;
+      target.classList.remove('anim-bounce-happy', 'anim-eat-chew');
+      void target.offsetWidth;
+      target.classList.add(cls);
+      setTimeout(() => target.classList.remove(cls), duration);
+    }
+
+    // =========================================================================
+    // 8. LIVE2D BUILT-IN RENDERING (TAILS, FUR COLOR, PATCHES, EYE-ONLY TRACKING)
+    // =========================================================================
+    function buildTailsSVG(containerId, tailCount, furColor, isGirl) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const ns = 'http://www.w3.org/2000/svg';
+      container.innerHTML = '';
+
+      // Graceful naturally-curved fluffy fox tails (curving smoothly like blossoming petals, not straight sticks!)
+      const pivotY = isGirl ? 302 : 306;
+      const spread = tailCount === 1 ? 0 : Math.min(172, 52 + (tailCount - 1) * 15.5);
+
+      for (let idx = 0; idx < tailCount; idx++) {
+        const frac = tailCount === 1 ? 0.35 : (idx / (tailCount - 1)) - 0.5;
+        const angle = tailCount === 1 ? 42 : frac * spread;
+        // Mirror left vs right so both sides curl naturally upward/gracefully into a crescent wave
+        const mirrorX = frac < 0 ? -1 : 1;
+        const centerBoost = 1 - Math.abs(frac) * 1.05;
+        const lenScale = (isGirl ? 1.06 : 1.0) + Math.max(0, centerBoost) * 0.14;
+        const widthScale = (tailCount >= 7 ? 0.86 : 0.98) * mirrorX;
+
+        const outer = document.createElementNS(ns, 'g');
+        outer.setAttribute(
+          'transform',
+          `translate(200, ${pivotY}) rotate(${angle.toFixed(1)}) scale(${widthScale.toFixed(2)}, ${lenScale.toFixed(2)}) translate(-200, ${-pivotY})`
+        );
+        outer.setAttribute('class', 'touch-zone');
+        outer.setAttribute('data-part', 'tail');
+        outer.addEventListener('click', e => handleTouchPart('tail', e));
+
+        // Calm, natural swaying wave
+        const sway = document.createElementNS(ns, 'g');
+        sway.setAttribute('class', 'anim-tail');
+        sway.style.transformOrigin = `200px ${pivotY}px`;
+        const amp = 2.6 + (idx % 3) * 0.8;
+        const dur = (4.8 + (idx % 4) * 0.55).toFixed(2);
+        const delay = (idx * 0.42).toFixed(2);
+        sway.style.setProperty('--tail-rot-a', `${-amp}deg`);
+        sway.style.setProperty('--tail-rot-b', `${amp + 0.5}deg`);
+        sway.style.setProperty('--tail-dur', `${dur}s`);
+        sway.style.animationDelay = `${delay}s`;
+
+        // Naturally curved lush plush tail (sweeps gently out on belly, curls gracefully upward at tip)
+        const basePath = document.createElementNS(ns, 'path');
+        basePath.setAttribute(
+          'd',
+          `M200 ${pivotY} ` +
+          `C228 ${pivotY - 42}, 244 ${pivotY - 102}, 228 ${pivotY - 156} ` +
+          `C219 ${pivotY - 184}, 198 ${pivotY - 208}, 168 ${pivotY - 224} ` +
+          `C166 ${pivotY - 196}, 162 ${pivotY - 168}, 172 ${pivotY - 142} ` +
+          `Q158 ${pivotY - 128} 170 ${pivotY - 108} ` +
+          `C166 ${pivotY - 72}, 180 ${pivotY - 32}, 200 ${pivotY} Z`
+        );
+        basePath.setAttribute('fill', furColor);
+        basePath.setAttribute('stroke', '#5c4338');
+        basePath.setAttribute('stroke-width', '3');
+        basePath.setAttribute('stroke-linejoin', 'round');
+        sway.appendChild(basePath);
+
+        // Curved wavy cream-white fluffy tail tip matching the natural bend
+        const tipPath = document.createElementNS(ns, 'path');
+        tipPath.setAttribute(
+          'd',
+          `M225 ${pivotY - 164} ` +
+          `Q210 ${pivotY - 154} 198 ${pivotY - 166} ` +
+          `Q184 ${pivotY - 156} 169 ${pivotY - 168} ` +
+          `C165 ${pivotY - 186}, 166 ${pivotY - 206}, 168 ${pivotY - 224} ` +
+          `C198 ${pivotY - 208}, 219 ${pivotY - 184}, 225 ${pivotY - 164} Z`
+        );
+        tipPath.setAttribute('fill', '#fffaf2');
+        tipPath.setAttribute('stroke', '#5c4338');
+        tipPath.setAttribute('stroke-width', '2.5');
+        tipPath.setAttribute('stroke-linejoin', 'round');
+        sway.appendChild(tipPath);
+
+        // Soft fur flow accent line for plushness
+        const furLine = document.createElementNS(ns, 'path');
+        furLine.setAttribute(
+          'd',
+          `M210 ${pivotY - 62} Q224 ${pivotY - 104} 212 ${pivotY - 142}`
+        );
+        furLine.setAttribute('fill', 'none');
+        furLine.setAttribute('stroke', '#ffffff');
+        furLine.setAttribute('stroke-width', '2.2');
+        furLine.setAttribute('stroke-linecap', 'round');
+        furLine.setAttribute('opacity', '0.35');
+        sway.appendChild(furLine);
+
+        outer.appendChild(sway);
+        container.appendChild(outer);
+      }
+    }
+
+    function renderPatchesToLayer(headLayerId, bodyLayerId) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const headG = document.getElementById(headLayerId);
+      const bodyG = document.getElementById(bodyLayerId);
+      if (!headG || !bodyG) return;
+      headG.innerHTML = '';
+      bodyG.innerHTML = '';
+      if (!state.patchesEnabled) return;
+
+      state.patches.forEach(p => {
+        const parent = p.target === 'head' ? headG : bodyG;
+        let el = null;
+        if (p.shape === 'circle') {
+          el = document.createElementNS(ns, 'circle');
+          el.setAttribute('cx', p.x);
+          el.setAttribute('cy', p.y);
+          el.setAttribute('r', p.size);
+          el.setAttribute('fill', p.color);
+        } else if (p.shape === 'diamond') {
+          const s = p.size * 1.15;
+          el = document.createElementNS(ns, 'polygon');
+          el.setAttribute('points', `${p.x},${p.y - s} ${p.x + s},${p.y} ${p.x},${p.y + s} ${p.x - s},${p.y}`);
+          el.setAttribute('fill', p.color);
+        } else if (p.shape === 'heart') {
+          const s = p.size * 0.085;
+          el = document.createElementNS(ns, 'path');
+          el.setAttribute('d', 'M0 -5 C-7 -15, -18 -5, -10 5 L0 15 L10 5 C18 -5, 7 -15, 0 -5 Z');
+          el.setAttribute('transform', `translate(${p.x}, ${p.y}) scale(${s})`);
+          el.setAttribute('fill', p.color);
+        } else if (p.shape === 'star') {
+          const pts = [];
+          for (let i = 0; i < 10; i++) {
+            const r = i % 2 === 0 ? p.size * 1.2 : p.size * 0.52;
+            const a = (i * Math.PI) / 5 - Math.PI / 2;
+            pts.push(`${(p.x + Math.cos(a) * r).toFixed(1)},${(p.y + Math.sin(a) * r).toFixed(1)}`);
+          }
+          el = document.createElementNS(ns, 'polygon');
+          el.setAttribute('points', pts.join(' '));
+          el.setAttribute('fill', p.color);
+        } else if (p.shape === 'freehand' && Array.isArray(p.points) && p.points.length > 1) {
+          el = document.createElementNS(ns, 'polyline');
+          el.setAttribute('points', p.points.map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' '));
+          el.setAttribute('fill', 'none');
+          el.setAttribute('stroke', p.color);
+          el.setAttribute('stroke-width', p.size * 1.2);
+          el.setAttribute('stroke-linecap', 'round');
+          el.setAttribute('stroke-linejoin', 'round');
+        }
+        if (el) {
+          el.setAttribute('opacity', '0.92');
+          parent.appendChild(el);
+        }
+      });
+    }
+
+    function renderPetAppearance() {
+      const c = state.furColor;
+      // Update Xinzoruo chibi fox 100% opaque fur-to-white gradients
+      ['fox-fur-grad-top', 'fox-fur-grad-mid', 'fox-ear-grad-l-stop', 'fox-ear-grad-l-mid', 'fox-ear-grad-r-stop', 'fox-ear-grad-r-mid'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('stop-color', c);
+      });
+      ['fox-paw-l', 'fox-paw-r', 'fox-foot-l', 'fox-foot-r'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('fill', c);
+      });
+
+      const foxGroup = document.getElementById('fox-form-group');
+      if (foxGroup) foxGroup.classList.remove('hidden');
+      buildTailsSVG('fox-tails-layer', state.isFoxGirl ? 9 : state.tails, c, false);
+      renderPatchesToLayer('fox-head-patches', 'fox-body-patches');
+
+      // Toggle between Built-in SVG and AI Modular Live2D
+      const hasAi = Boolean(state.aiParts && state.aiParts.body);
+      const useAi = state.useAiLive2D && hasAi;
+      document.getElementById('fox-svg').classList.toggle('hidden', useAi);
+      document.getElementById('ai-25d-container').classList.toggle('hidden', !useAi);
+      document.getElementById('ai-stage-controls').classList.toggle('hidden', !hasAi);
+      const toggleBtn = document.getElementById('btn-toggle-ai-mode');
+      if (toggleBtn) {
+        toggleBtn.textContent = useAi ? '✨ 目前：AI Live2D (切回內建狐狸)' : '✨ 目前：內建狐狸 (切到 AI 模型)';
+      }
+
+      applyStageUserTransform();
+
+      if (hasAi) {
+        loadModularPartsIntoEngine(state.aiParts);
+      }
+    }
+
+    // User-adjustable Stage Height, Character Scale, Vertical Offset & AI Tail Scale
+    function toggleStageZoomPanel(forceVal) {
+      const panel = document.getElementById('stage-zoom-panel');
+      if (!panel) return;
+      const show = typeof forceVal === 'boolean' ? forceVal : panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !show);
+      if (show) syncStageZoomControls();
+    }
+
+    function syncStageZoomControls() {
+      const h = state.stageHeight || 420;
+      const sc = Math.round((state.charScale || 1.0) * 100);
+      const oy = state.charOffsetY || 0;
+      const ts = Math.round((state.aiTailScale || 1.0) * 100);
+
+      const hInput = document.getElementById('zoom-stage-h');
+      const sInput = document.getElementById('zoom-char-scale');
+      const yInput = document.getElementById('zoom-char-y');
+      const tInput = document.getElementById('zoom-tail-scale');
+      if (hInput) hInput.value = h;
+      if (sInput) sInput.value = sc;
+      if (yInput) yInput.value = oy;
+      if (tInput) tInput.value = ts;
+
+      const hVal = document.getElementById('zoom-stage-h-val');
+      const sVal = document.getElementById('zoom-char-scale-val');
+      const yVal = document.getElementById('zoom-char-y-val');
+      const tVal = document.getElementById('zoom-tail-scale-val');
+      if (hVal) hVal.textContent = `${h}px`;
+      if (sVal) sVal.textContent = `${sc}%`;
+      if (yVal) yVal.textContent = `${oy}px`;
+      if (tVal) tVal.textContent = `${ts}%`;
+    }
+
+    function updateStageTransformFromUI() {
+      state.stageHeight = parseInt(document.getElementById('zoom-stage-h')?.value || '420', 10);
+      state.charScale = parseInt(document.getElementById('zoom-char-scale')?.value || '100', 10) / 100;
+      state.charOffsetY = parseInt(document.getElementById('zoom-char-y')?.value || '0', 10);
+      state.aiTailScale = parseInt(document.getElementById('zoom-tail-scale')?.value || '100', 10) / 100;
+      syncStageZoomControls();
+      applyStageUserTransform();
+      saveState();
+    }
+
+    function resetStageTransform() {
+      state.stageHeight = 420;
+      state.charScale = 1.0;
+      state.charOffsetY = 0;
+      state.aiTailScale = 1.0;
+      syncStageZoomControls();
+      applyStageUserTransform();
+      saveState();
+      showToast('已重置視窗與角色縮放比例');
+    }
+
+    function applyStageUserTransform() {
+      const area = document.getElementById('pet-interactive-area');
+      const svg = document.getElementById('fox-svg');
+      const container = document.getElementById('ai-25d-container');
+      const canvas = document.getElementById('ai-25d-canvas');
+      if (!area) return;
+
+      const stageH = Math.max(300, Math.min(680, state.stageHeight || 420));
+      const charScale = state.charScale || 1.0;
+      const offsetY = state.charOffsetY || 0;
+
+      area.style.minHeight = `${stageH}px`;
+      area.style.height = `${stageH}px`;
+
+      // Apply scale & vertical offset to built-in SVG fox
+      if (svg) {
+        svg.style.transformOrigin = 'center 78%';
+        svg.style.transform = `translateY(${offsetY}px) scale(${charScale})`;
+      }
+
+      // Match AI canvas container and internal resolution to stage area so nothing ever squishes or clips
+      if (container && canvas) {
+        const availW = Math.max(320, area.clientWidth || 520);
+        container.style.width = `${availW}px`;
+        container.style.height = `${stageH}px`;
+
+        const targetW = 640;
+        const targetH = Math.round(targetW * (stageH / Math.max(1, availW)));
+        if (canvas.width !== targetW || canvas.height !== targetH) {
+          canvas.width = targetW;
+          canvas.height = targetH;
+        }
+      }
+    }
+
+    // Eye-ONLY mouse tracking + Natural random blinking
+    function initLive2DEffects() {
+      let targetX = 0, targetY = 0;
+      let currX = 0, currY = 0;
+
+      const updatePointer = (clientX, clientY) => {
+        const container = (state.useAiLive2D && state.aiParts)
+          ? document.getElementById('ai-25d-container')
+          : document.getElementById('fox-svg');
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        targetX = Math.max(-1, Math.min(1, ((clientX - rect.left) / rect.width - 0.5) * 2));
+        targetY = Math.max(-1, Math.min(1, ((clientY - rect.top) / rect.height - 0.5) * 2));
+        engine25D.pointerX = targetX;
+        engine25D.pointerY = targetY;
+      };
+
+      window.addEventListener('mousemove', e => updatePointer(e.clientX, e.clientY));
+      window.addEventListener('touchmove', e => {
+        if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+
+      function eyeTrackLoop() {
+        currX += (targetX - currX) * 0.14;
+        currY += (targetY - currY) * 0.14;
+        // Strict small pupil range inside clipped eyelids
+        const pdx = (currX * 2.5).toFixed(2);
+        const pdy = (currY * 1.8).toFixed(2);
+        document.querySelectorAll('.eye-pupil').forEach(p => {
+          p.setAttribute('transform', `translate(${pdx}, ${pdy})`);
+        });
+        requestAnimationFrame(eyeTrackLoop);
+      }
+      requestAnimationFrame(eyeTrackLoop);
+
+      // Start AI Modular Canvas Loop
+      startModular25DLoop();
+
+      // Natural blinking for built-in SVG
+      setInterval(() => {
+        const p = getActiveLive2DPrefix();
+        const normalEyes = document.getElementById(`${p}-eyes-normal`);
+        const blinkEyes = document.getElementById(`${p}-eyes-blink`);
+        if (!normalEyes || !blinkEyes || normalEyes.classList.contains('hidden')) return;
+        normalEyes.classList.add('hidden');
+        blinkEyes.classList.remove('hidden');
+        setTimeout(() => {
+          if (!blinkEyes.classList.contains('hidden')) {
+            blinkEyes.classList.add('hidden');
+            normalEyes.classList.remove('hidden');
+          }
+        }, 140);
+      }, 3600);
+    }
+
+    // =========================================================================
+    // 9. UI RENDERING & ACTION TABS
+    // =========================================================================
+    function formatDuration(ms) {
+      if (ms <= 0) return '0 分';
+      const totalMin = Math.ceil(ms / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return h > 0 ? `${h} 小時 ${m} 分` : `${m} 分`;
+    }
+
+    function renderUI() {
+      document.getElementById('pet-name-display').textContent = state.name;
+      document.getElementById('pet-stage-badge').textContent = state.isFoxGirl ? '九尾狐娘 🌸' : `${state.tails} 尾`;
+      document.getElementById('total-feeds-display').textContent = state.totalFeeds;
+      document.getElementById('age-display').textContent = formatDuration(state.lastTickAt - state.createdAt);
+
+      // Bars
+      const hVal = Math.round(state.hunger);
+      const iVal = Math.round(state.intimacy);
+      const cVal = Math.round(state.cleanliness);
+      document.getElementById('val-hunger').textContent = `${hVal}%`;
+      document.getElementById('bar-hunger').style.width = `${hVal}%`;
+      document.getElementById('val-intimacy').textContent = `${iVal}%`;
+      document.getElementById('bar-intimacy').style.width = `${iVal}%`;
+      document.getElementById('val-clean').textContent = `${cVal}%`;
+      document.getElementById('bar-clean').style.width = `${cVal}%`;
+
+      // Warnings
+      const warnPill = document.getElementById('warning-pill');
+      const chip = document.getElementById('status-hint-chip');
+      const hungerTimer = document.getElementById('hunger-death-timer');
+      const cleanTimer = document.getElementById('clean-warn-timer');
+
+      if (state.hunger <= 0 && state.hungerZeroSince) {
+        const left = (state.hungerZeroSince + STARVE_DEATH_HOURS * HOUR_MS) - state.lastTickAt;
+        hungerTimer.textContent = `⚠️ 飽食度歸零！若 ${formatDuration(left)} 內未餵食將會餓死！`;
+        hungerTimer.classList.remove('hidden');
+      } else {
+        hungerTimer.classList.add('hidden');
+      }
+
+      if (state.cleanliness <= 5) {
+        cleanTimer.textContent = '⚠️ 非常髒！目前每小時親密度 -1%，若與親密度同時歸零 24 小時會離家出走！';
+        cleanTimer.classList.remove('hidden');
+      } else if (state.cleanliness < 30) {
+        cleanTimer.textContent = '🫧 清潔度低於 30%，現在玩耍不會增加親密度喔！';
+        cleanTimer.classList.remove('hidden');
+      } else {
+        cleanTimer.classList.add('hidden');
+      }
+
+      const critical = state.hunger <= 15 || state.cleanliness <= 10 || state.intimacy <= 15;
+      warnPill.classList.toggle('hidden', !critical || state.status !== 'alive');
+      if (critical) {
+        chip.textContent = '需要照顧！';
+        chip.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200';
+      } else {
+        chip.textContent = '元氣滿滿';
+        chip.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+      }
+
+      // Evolution EXP Bar
+      const expLabel = document.getElementById('exp-label');
+      const expVal = document.getElementById('val-exp');
+      const expBar = document.getElementById('bar-exp');
+      const expSub = document.getElementById('exp-sub-hint');
+      const evolveBtn = document.getElementById('btn-trigger-evolve-fg');
+
+      if (state.isFoxGirl) {
+        expLabel.textContent = '🌸 最終進化：九尾狐娘';
+        expVal.textContent = 'MAX';
+        expBar.style.width = '100%';
+        expSub.textContent = '已達成最終進化型態，永遠陪伴在你身邊！';
+        if (evolveBtn) evolveBtn.classList.add('hidden');
+      } else if (state.tails === 9) {
+        // Rule 12: Keep full, hide count, track silently in background
+        expLabel.textContent = '✨ 升級經驗（九尾極致）';
+        expVal.textContent = 'MAX';
+        expBar.style.width = '100%';
+        expSub.textContent = state.canEvolveFoxGirl
+          ? '九尾靈力已圓滿！隨時可點擊下方按鈕進化為九尾狐娘！'
+          : '九尾力量已達巔峰…繼續細心餵養似乎會發生奇妙變化？';
+        if (evolveBtn) evolveBtn.classList.toggle('hidden', !state.canEvolveFoxGirl);
+      } else {
+        const req = EXP_REQ_TABLE[state.tails];
+        const pct = Math.min(100, (state.stageFeeds / req) * 100);
+        expLabel.textContent = `✨ 升級經驗（往 ${state.tails + 1} 尾）`;
+        expVal.textContent = `${state.stageFeeds} / ${req}`;
+        expBar.style.width = `${pct}%`;
+        expSub.textContent = state.stageFeeds >= req && state.intimacy < 80
+          ? '經驗已滿！將親密度提升至 80% 以上即可進化！'
+          : `再餵食 ${Math.max(0, req - state.stageFeeds)} 次且親密度 ≥ 80% 即可多長出一條尾巴！`;
+        if (evolveBtn) evolveBtn.classList.add('hidden');
+      }
+
+      // Quotas & Cooldowns
+      state.feedTimestamps = pruneWindow(state.feedTimestamps, FEED_WINDOW_MS);
+      const feedLeft = Math.max(0, FEED_MAX_PER_WINDOW - state.feedTimestamps.length);
+      document.getElementById('feed-quota-text').textContent = `剩餘 ${feedLeft} / ${FEED_MAX_PER_WINDOW}`;
+      ['btn-feed-aburaage', 'btn-feed-tofu', 'btn-feed-tamagoyaki'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.disabled = feedLeft <= 0 || state.status !== 'alive';
+      });
+      if (feedLeft === 0 && state.feedTimestamps.length > 0) {
+        const nextIn = (state.feedTimestamps[0] + FEED_WINDOW_MS) - state.lastTickAt;
+        document.getElementById('feed-cooldown-hint').textContent = `下次可餵食時間：約 ${formatDuration(nextIn)} 後`;
+      } else {
+        document.getElementById('feed-cooldown-hint').textContent = '';
+      }
+
+      state.playTimestamps = pruneWindow(state.playTimestamps, PLAY_WINDOW_MS);
+      const playLeft = Math.max(0, PLAY_MAX_PER_WINDOW - state.playTimestamps.length);
+      document.getElementById('play-quota-text').textContent = `剩餘 ${playLeft} / ${PLAY_MAX_PER_WINDOW}`;
+      ['btn-ball-small', 'btn-ball-medium', 'btn-ball-large'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.disabled = playLeft <= 0 || state.status !== 'alive';
+      });
+      if (playLeft === 0 && state.playTimestamps.length > 0) {
+        const nextIn = (state.playTimestamps[0] + PLAY_WINDOW_MS) - state.lastTickAt;
+        document.getElementById('play-cooldown-hint').textContent = `下次可玩耍時間：約 ${formatDuration(nextIn)} 後`;
+      } else {
+        document.getElementById('play-cooldown-hint').textContent = '';
+      }
+
+      const bathRemain = state.lastBathAt > 0 ? (state.lastBathAt + BATH_COOLDOWN_MS) - state.lastTickAt : 0;
+      const bathBtn = document.getElementById('btn-bath-action');
+      const bathHint = document.getElementById('bath-cooldown-hint');
+      if (bathRemain > 0) {
+        bathBtn.disabled = true;
+        bathHint.textContent = `冷卻中：約 ${formatDuration(bathRemain)} 後可再次洗澡`;
+      } else {
+        bathBtn.disabled = state.status !== 'alive';
+        bathHint.textContent = '目前可以隨時幫小狐狸洗澡！';
+      }
+
+      // Game Over Overlay
+      const go = document.getElementById('gameover-overlay');
+      if (state.status === 'dead') {
+        go.classList.remove('hidden');
+        document.getElementById('gameover-icon').textContent = '🥀';
+        document.getElementById('gameover-title').textContent = `${state.name} 餓死了…`;
+        document.getElementById('gameover-desc').textContent = '飽食度歸零超過 3 天（72 小時）沒有進食，小狐狸化作點點星光離開了。';
+      } else if (state.status === 'runaway') {
+        go.classList.remove('hidden');
+        document.getElementById('gameover-icon').textContent = '🎒';
+        document.getElementById('gameover-title').textContent = `${state.name} 離家出走了…`;
+        document.getElementById('gameover-desc').textContent = '親密度與清潔度同時歸零超過 24 小時，小狐狸難過地收拾行李離開了。';
+      } else {
+        go.classList.add('hidden');
+      }
+    }
+
+    function switchActionTab(tab) {
+      ['feed', 'play', 'bath'].forEach(t => {
+        document.getElementById(`panel-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.className = 'py-2 rounded-xl text-xs sm:text-sm font-black bg-white text-orange-600 shadow-sm transition';
+        } else {
+          btn.className = 'py-2 rounded-xl text-xs sm:text-sm font-black text-[#8f6e60] hover:bg-white/60 transition';
+        }
+      });
+      if (tab !== 'play' && isPettingMode) togglePettingMode(false);
+    }
+
+    // =========================================================================
+    // 10. CUSTOMIZE WORKSHOP (FUR, PATCHES, DRAWING)
+    // =========================================================================
+    function openCustomizeModal() {
+      document.getElementById('customize-modal').classList.remove('hidden');
+      document.getElementById('fur-color-picker').value = state.furColor;
+      document.getElementById('fur-hex-input').value = state.furColor;
+      document.getElementById('patch-enabled-toggle').checked = state.patchesEnabled;
+      syncWorkshopPreviews();
+      switchCustomTab('fur');
+    }
+
+    function closeCustomizeModal() {
+      document.getElementById('customize-modal').classList.add('hidden');
+      saveState();
+      renderPetAppearance();
+    }
+
+    function switchCustomTab(tab) {
+      ['fur', 'patch', 'ai'].forEach(t => {
+        document.getElementById(`cpanel-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`ctab-${t}`);
+        if (t === tab) {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-pink-400 to-orange-400 text-white shadow-sm';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black bg-orange-50 text-[#6e4537]';
+        }
+      });
+      syncWorkshopPreviews();
+    }
+
+    function buildFurPresets() {
+      const wrap = document.getElementById('fur-presets');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      FUR_PRESETS.forEach(p => {
+        const b = document.createElement('button');
+        b.className = 'p-1.5 rounded-xl bg-white border border-pink-100 hover:border-pink-400 flex flex-col items-center gap-1 transition';
+        b.innerHTML = `<span class="w-7 h-7 rounded-full border border-black/10 shadow-inner" style="background:${p.hex}"></span><span class="text-[10px] font-bold text-[#5c4338]">${p.name}</span>`;
+        b.onclick = () => setFurColor(p.hex);
+        wrap.appendChild(b);
+      });
+    }
+
+    function setFurColor(hex) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+      state.furColor = hex;
+      document.getElementById('fur-color-picker').value = hex;
+      document.getElementById('fur-hex-input').value = hex;
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function onHexInput(val) {
+      let clean = val.trim();
+      if (!clean.startsWith('#')) clean = '#' + clean;
+      if (/^#[0-9a-fA-F]{6}$/.test(clean)) setFurColor(clean);
+    }
+
+    function randomizeFurColor() {
+      const h = Math.floor(Math.random() * 360);
+      const s = 45 + Math.floor(Math.random() * 40);
+      const l = 58 + Math.floor(Math.random() * 26);
+      setFurColor(hslToHex(h, s, l));
+      playTone(['E5', 'G5'], '16n');
+    }
+
+    function hslToHex(h, s, l) {
+      l /= 100;
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    }
+
+    function syncWorkshopPreviews() {
+      const baseMarkup = `
+        <defs>
+          <linearGradient id="pv-fur-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${state.furColor}"/>
+            <stop offset="52%" stop-color="${state.furColor}" stop-opacity="0.88"/>
+            <stop offset="86%" stop-color="#fffaf5"/>
+            <stop offset="100%" stop-color="#fffaf5"/>
+          </linearGradient>
+          <clipPath id="pv-body-clip"><path d="M154 206 C142 238, 134 294, 148 326 C160 342, 240 342, 252 326 C266 294, 258 238, 246 206 Z"/></clipPath>
+          <clipPath id="pv-head-clip"><path d="M132 174 C132 126, 162 110, 200 110 C238 110, 268 126, 268 174 C266 206, 236 220, 200 220 C164 220, 134 206, 132 174 Z"/></clipPath>
+        </defs>
+        <path d="M156 206 C146 218, 138 228, 148 236 C138 244, 140 256, 146 266 C136 296, 138 324, 154 334 C172 342, 228 342, 246 334 C262 324, 264 296, 254 266 C260 256, 262 244, 252 236 C262 228, 254 218, 244 206 Z" fill="#fffaf5" stroke="#4a3730" stroke-width="3.2"/>
+        <g id="PV_BODY_PATCH" clip-path="url(#pv-body-clip)"></g>
+        <path d="M148 242 C132 256, 128 278, 138 286 C146 292, 156 280, 154 264" fill="${state.furColor}" stroke="#4a3730" stroke-width="3"/>
+        <path d="M252 242 C268 256, 272 278, 262 286 C254 292, 244 280, 246 264" fill="${state.furColor}" stroke="#4a3730" stroke-width="3"/>
+        <path d="M156 124 C128 136, 98 156, 76 168 C94 182, 118 182, 146 174 Z" fill="${state.furColor}" stroke="#4a3730" stroke-width="3.2"/>
+        <path d="M244 124 C272 136, 302 156, 324 168 C306 182, 282 182, 254 174 Z" fill="${state.furColor}" stroke="#4a3730" stroke-width="3.2"/>
+        <path d="M134 176 C132 128, 162 110, 200 110 C238 110, 268 128, 266 176 C266 202, 246 218, 224 222 Q200 226 176 222 C154 218, 134 202, 134 176 Z" fill="url(#pv-fur-grad)"/>
+        <path d="M148 214 C136 204, 132 190, 134 176 C136 130, 162 110, 200 110 C238 110, 264 130, 266 176 C268 190, 264 204, 252 214" fill="none" stroke="#4a3730" stroke-width="3.2" stroke-linecap="round"/>
+        <g id="PV_HEAD_PATCH" clip-path="url(#pv-head-clip)"></g>
+        <ellipse cx="182" cy="148" rx="4" ry="3" fill="#fffaf5"/><ellipse cx="218" cy="148" rx="4" ry="3" fill="#fffaf5"/>
+        <ellipse cx="174" cy="166" rx="9" ry="7.8" fill="#3a2822"/><ellipse cx="226" cy="166" rx="9" ry="7.8" fill="#3a2822"/>
+        <circle cx="176" cy="163" r="2.8" fill="#fff"/><circle cx="228" cy="163" r="2.8" fill="#fff"/>
+        <path d="M196.5 172 L203.5 172 L200 176.5 Z" fill="#3a2822"/>
+        <path d="M191 180 Q195.5 186 200 180.5 Q204.5 186 209 180" fill="none" stroke="#3a2822" stroke-width="2.4" stroke-linecap="round"/>
+      `;
+      const furSvg = document.getElementById('preview-fur-svg');
+      const patchSvg = document.getElementById('preview-patch-svg');
+      if (furSvg) {
+        furSvg.innerHTML = baseMarkup.replace('PV_BODY_PATCH', 'pvf-body').replace('PV_HEAD_PATCH', 'pvf-head');
+        renderPatchesToLayer('pvf-head', 'pvf-body');
+      }
+      if (patchSvg) {
+        patchSvg.innerHTML = baseMarkup.replace('PV_BODY_PATCH', 'pvp-body').replace('PV_HEAD_PATCH', 'pvp-head');
+        renderPatchesToLayer('pvp-head', 'pvp-body');
+      }
+    }
+
+    function setPatchShape(shape) {
+      patchBrush.shape = shape;
+      document.querySelectorAll('.patch-shape-btn').forEach(btn => {
+        const active = btn.dataset.shape === shape;
+        btn.className = active
+          ? 'patch-shape-btn py-1.5 rounded-xl bg-pink-500 text-white font-bold'
+          : 'patch-shape-btn py-1.5 rounded-xl bg-pink-50 text-[#5c4338] font-bold';
+      });
+    }
+
+    function togglePatchesEnabled(val) {
+      state.patchesEnabled = val;
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function undoLastPatch() {
+      state.patches.pop();
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function clearAllPatches() {
+      state.patches = [];
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function applyPatchTemplate(tpl) {
+      state.patchesEnabled = true;
+      document.getElementById('patch-enabled-toggle').checked = true;
+      if (tpl === 'spots') {
+        state.patches = [
+          { target: 'head', shape: 'circle', x: 144, y: 145, size: 11, color: '#fff5e6' },
+          { target: 'head', shape: 'circle', x: 256, y: 145, size: 11, color: '#fff5e6' },
+          { target: 'body', shape: 'circle', x: 148, y: 280, size: 14, color: '#fff5e6' },
+          { target: 'body', shape: 'circle', x: 252, y: 280, size: 14, color: '#fff5e6' }
+        ];
+      } else if (tpl === 'star') {
+        state.patches = [
+          { target: 'head', shape: 'star', x: 200, y: 132, size: 15, color: '#fde047' },
+          { target: 'head', shape: 'circle', x: 174, y: 136, size: 6, color: '#fff5e6' },
+          { target: 'head', shape: 'circle', x: 226, y: 136, size: 6, color: '#fff5e6' }
+        ];
+      } else if (tpl === 'calico') {
+        state.patches = [
+          { target: 'head', shape: 'circle', x: 142, y: 132, size: 28, color: '#5c4338' },
+          { target: 'head', shape: 'circle', x: 252, y: 138, size: 24, color: '#fff5e6' },
+          { target: 'body', shape: 'circle', x: 248, y: 278, size: 26, color: '#5c4338' },
+          { target: 'body', shape: 'circle', x: 150, y: 295, size: 22, color: '#fff5e6' }
+        ];
+      } else if (tpl === 'heart') {
+        state.patches = [
+          { target: 'head', shape: 'heart', x: 200, y: 132, size: 14, color: '#ffb7c5' },
+          { target: 'body', shape: 'heart', x: 152, y: 275, size: 12, color: '#ffb7c5' },
+          { target: 'body', shape: 'heart', x: 248, y: 275, size: 12, color: '#ffb7c5' }
+        ];
+      }
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function randomizePatches() {
+      const count = Math.max(1, Math.min(20, parseInt(document.getElementById('patch-random-count').value || '6', 10)));
+      const shapes = ['circle', 'heart', 'star', 'diamond'];
+      const palette = ['#fff5e6', '#5c4338', '#ffb7c5', '#fde68a', '#fed7aa'];
+      state.patchesEnabled = true;
+      document.getElementById('patch-enabled-toggle').checked = true;
+      state.patches = [];
+      for (let i = 0; i < count; i++) {
+        const isHead = Math.random() < 0.55;
+        state.patches.push({
+          target: isHead ? 'head' : 'body',
+          shape: shapes[Math.floor(Math.random() * shapes.length)],
+          x: isHead ? 130 + Math.random() * 140 : 140 + Math.random() * 120,
+          y: isHead ? 118 + Math.random() * 64 : 240 + Math.random() * 82,
+          size: 8 + Math.random() * 14,
+          color: palette[Math.floor(Math.random() * palette.length)]
+        });
+      }
+      renderPetAppearance();
+      syncWorkshopPreviews();
+      saveState();
+    }
+
+    function initPatchDrawing() {
+      const svg = document.getElementById('preview-patch-svg');
+      if (!svg) return;
+      let drawingStroke = null;
+
+      const getSvgCoords = (evt) => {
+        const rect = svg.getBoundingClientRect();
+        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        return {
+          x: ((clientX - rect.left) / rect.width) * 400,
+          y: ((clientY - rect.top) / rect.height) * 400
+        };
+      };
+
+      const startDraw = (evt) => {
+        evt.preventDefault();
+        const pt = getSvgCoords(evt);
+        const target = pt.y < 236 ? 'head' : 'body';
+        state.patchesEnabled = true;
+        document.getElementById('patch-enabled-toggle').checked = true;
+        if (patchBrush.shape === 'freehand') {
+          drawingStroke = { target, shape: 'freehand', color: patchBrush.color, size: patchBrush.size, points: [pt] };
+          state.patches.push(drawingStroke);
+        } else {
+          state.patches.push({ target, shape: patchBrush.shape, x: pt.x, y: pt.y, size: patchBrush.size, color: patchBrush.color });
+        }
+        renderPetAppearance();
+        syncWorkshopPreviews();
+      };
+
+      const moveDraw = (evt) => {
+        if (!drawingStroke) return;
+        evt.preventDefault();
+        drawingStroke.points.push(getSvgCoords(evt));
+        renderPetAppearance();
+        syncWorkshopPreviews();
+      };
+
+      const endDraw = () => {
+        if (drawingStroke) {
+          drawingStroke = null;
+          saveState();
+        }
+      };
+
+      svg.addEventListener('mousedown', startDraw);
+      window.addEventListener('mousemove', moveDraw);
+      window.addEventListener('mouseup', endDraw);
+      svg.addEventListener('touchstart', startDraw, { passive: false });
+      svg.addEventListener('touchmove', moveDraw, { passive: false });
+      window.addEventListener('touchend', endDraw);
+    }
+
+    // =========================================================================
+    // 11. AI MODULAR LIVE2D ENGINE (INDEPENDENT PARTS, EYE-ONLY MOUSE TRACKING)
+    // =========================================================================
+    const engine25D = {
+      pointerX: 0,
+      pointerY: 0,
+      smoothX: 0,
+      smoothY: 0,
+      explodeMode: false,
+      explodeProgress: 0,
+      showRig: false,
+      imgs: { body: null, head: null, earL: null, earR: null, tail: null },
+      metrics: null,
+      bounceY: 0,
+      bounceVel: 0,
+      earPerk: 0,
+      earPerkVel: 0,
+      tailBoost: 0,
+      blinkState: 0,
+      nextBlinkAt: 2.5,
+      triggerInteract(type) {
+        if (type === 'ears') this.earPerkVel = 0.42;
+        else if (type === 'tail') this.tailBoost = 1.0;
+        else if (type === 'feed' || type === 'head' || type === 'body' || type === 'bath' || type === 'ball-medium') {
+          this.bounceVel = -7.5;
+        }
+      }
+    };
+
+    function loadImg(src) {
+      return new Promise(resolve => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function setAiStylePrompt(text) {
+      const el = document.getElementById('ai-style-input');
+      if (el) el.value = text;
+    }
+
+    function toggleAiModelMode() {
+      if (!state.aiParts || !state.aiParts.body) {
+        showToast('尚未生成獨立拆件模型，請先到外觀工坊生成！');
+        return;
+      }
+      state.useAiLive2D = !state.useAiLive2D;
+      saveState();
+      renderPetAppearance();
+    }
+
+    function toggle25DExplode() {
+      engine25D.explodeMode = !engine25D.explodeMode;
+      const btn = document.getElementById('btn-toggle-explode');
+      if (btn) btn.textContent = engine25D.explodeMode ? '🧩 還原組裝' : '🧩 分層';
+    }
+
+    function toggle25DRigOverlay() {
+      engine25D.showRig = !engine25D.showRig;
+    }
+
+    function clearAiModel() {
+      state.useAiLive2D = false;
+      saveState();
+      renderPetAppearance();
+      showToast('已切回內建 Live2D 外觀');
+    }
+
+    function measureOpaqueBounds(img) {
+      if (!img) return null;
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, c.width, c.height).data;
+      let minX = c.width, minY = c.height, maxX = 0, maxY = 0;
+      let topSumX = 0, topCount = 0;
+      let botSumX = 0, botCount = 0;
+
+      for (let y = 0; y < c.height; y++) {
+        for (let x = 0; x < c.width; x++) {
+          if (data[(y * c.width + x) * 4 + 3] > 28) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX <= minX || maxY <= minY) {
+        return { minX: 0, minY: 0, maxX: c.width, maxY: c.height, w: c.width, h: c.height, topX: c.width / 2, botX: c.width / 2 };
+      }
+      const h = maxY - minY;
+      const topBandEnd = minY + Math.max(8, h * 0.08);
+      const botBandStart = maxY - Math.max(8, h * 0.14);
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          if (data[(y * c.width + x) * 4 + 3] > 28) {
+            if (y <= topBandEnd) { topSumX += x; topCount++; }
+            if (y >= botBandStart) { botSumX += x; botCount++; }
+          }
+        }
+      }
+      return {
+        minX, minY, maxX, maxY,
+        w: maxX - minX,
+        h,
+        topX: topCount > 0 ? topSumX / topCount : (minX + maxX) / 2,
+        botX: botCount > 0 ? botSumX / botCount : (minX + maxX) / 2
+      };
+    }
+
+    async function loadModularPartsIntoEngine(parts) {
+      if (!parts) return;
+      const [body, tail] = await Promise.all([
+        loadImg(parts.body), loadImg(parts.tail)
+      ]);
+      engine25D.imgs = { body, head: null, earL: null, earR: null, tail };
+      engine25D.metrics = {
+        body: measureOpaqueBounds(body),
+        tail: measureOpaqueBounds(tail)
+      };
+      applyStageUserTransform();
+      const preview = document.getElementById('ai-parts-preview');
+      if (preview && parts.body) {
+        preview.classList.remove('hidden');
+        const tb = document.getElementById('thumb-body');
+        const tt = document.getElementById('thumb-tail');
+        if (tb) tb.src = parts.body;
+        if (tt && parts.tail) tt.src = parts.tail;
+      }
+    }
+
+    // Flood-fill near-white background to transparent (PRESERVING ORIGINAL ASPECT RATIO)
+    async function removeWhiteBg(dataUrl) {
+      const img = await loadImg(dataUrl);
+      if (!img) return dataUrl;
+      const maxDim = 640;
+      const scale = Math.min(1, maxDim / Math.max(img.width || 512, img.height || 512));
+      const cw = Math.max(1, Math.round((img.width || 512) * scale));
+      const ch = Math.max(1, Math.round((img.height || 512) * scale));
+
+      const c = document.createElement('canvas');
+      c.width = cw;
+      c.height = ch;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, cw, ch);
+      const id = ctx.getImageData(0, 0, cw, ch);
+      const d = id.data;
+      const visited = new Uint8Array(cw * ch);
+      const stack = [];
+
+      const isNearWhite = (idx) => d[idx] > 232 && d[idx + 1] > 232 && d[idx + 2] > 232;
+
+      const pushIfBg = (x, y) => {
+        const pos = y * cw + x;
+        if (visited[pos]) return;
+        const idx = pos * 4;
+        if (isNearWhite(idx)) {
+          visited[pos] = 1;
+          stack.push(pos);
+        }
+      };
+
+      for (let x = 0; x < cw; x++) {
+        pushIfBg(x, 0);
+        pushIfBg(x, ch - 1);
+      }
+      for (let y = 0; y < ch; y++) {
+        pushIfBg(0, y);
+        pushIfBg(cw - 1, y);
+      }
+
+      while (stack.length > 0) {
+        const pos = stack.pop();
+        const x = pos % cw;
+        const y = (pos - x) / cw;
+        d[pos * 4 + 3] = 0;
+
+        if (x > 0) pushIfBg(x - 1, y);
+        if (x < cw - 1) pushIfBg(x + 1, y);
+        if (y > 0) pushIfBg(x, y - 1);
+        if (y < ch - 1) pushIfBg(x, y + 1);
+      }
+
+      // Soften 1px fringe adjacent to transparent background
+      for (let y = 1; y < ch - 1; y++) {
+        for (let x = 1; x < cw - 1; x++) {
+          const pos = y * cw + x;
+          const idx = pos * 4;
+          if (d[idx + 3] > 0 && d[idx] > 215 && d[idx + 1] > 215 && d[idx + 2] > 215) {
+            const hasTransNeighbor =
+              d[(pos - 1) * 4 + 3] === 0 ||
+              d[(pos + 1) * 4 + 3] === 0 ||
+              d[(pos - cw) * 4 + 3] === 0 ||
+              d[(pos + cw) * 4 + 3] === 0;
+            if (hasTransNeighbor) {
+              d[idx + 3] = Math.round(d[idx + 3] * 0.35);
+            }
+          }
+        }
+      }
+
+      ctx.putImageData(id, 0, 0);
+      return c.toDataURL('image/png');
+    }
+
+    function getGeminiApiKey() {
+      const inputEl = document.getElementById('ai-custom-apikey');
+      const fromInput = inputEl ? inputEl.value.trim() : '';
+      if (fromInput) return fromInput;
+      try {
+        return (localStorage.getItem('fox_pet_custom_gemini_key') || '').trim();
+      } catch (e) {
+        return '';
+      }
+    }
+
+    async function callGeminiImage(parts, aspectRatio = null) {
+      const apiKey = getGeminiApiKey();
+      const models = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-2.5-flash-image'];
+      let lastErr = null;
+
+      for (const model of models) {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const generationConfig = {
+          responseModalities: ['TEXT', 'IMAGE']
+        };
+        if (aspectRatio && model === 'gemini-3.1-flash-image') {
+          generationConfig.imageConfig = { aspectRatio };
+        }
+        const payload = {
+          contents: [{ role: 'user', parts }],
+          generationConfig
+        };
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const res = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+              const errText = await res.text().catch(() => '');
+              const err = new Error(`HTTP ${res.status}${errText ? ' ' + errText.slice(0, 100) : ''}`);
+              err.status = res.status;
+              throw err;
+            }
+            const json = await res.json();
+            const candParts = json?.candidates?.[0]?.content?.parts || [];
+            const imgPart = candParts.find(p => p.inlineData && p.inlineData.data);
+            if (!imgPart) {
+              throw new Error('模型未回傳圖片資料，請稍後再試');
+            }
+            const mimeType = imgPart.inlineData.mimeType || 'image/png';
+            const data = imgPart.inlineData.data;
+            return {
+              mimeType,
+              data,
+              dataUrl: `data:${mimeType};base64,${data}`
+            };
+          } catch (err) {
+            lastErr = err;
+            if (attempt === 0 && (err.status === 401 || err.status === 429 || err.status >= 500)) {
+              await new Promise(r => setTimeout(r, 900));
+              continue;
+            }
+            break;
+          }
+        }
+      }
+      throw lastErr || new Error('圖片生成失敗');
+    }
+
+    // Fallback procedural plush tail matching current fur color if Step 2 API call is unavailable
+    function createFallbackPlushTailDataUrl(furColor) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      const grad = ctx.createLinearGradient(256, 460, 256, 45);
+      grad.addColorStop(0, furColor || '#f28c38');
+      grad.addColorStop(0.62, furColor || '#f28c38');
+      grad.addColorStop(0.76, '#fff8ef');
+      grad.addColorStop(1, '#ffffff');
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(256, 468);
+      ctx.bezierCurveTo(328, 390, 366, 265, 326, 155);
+      ctx.bezierCurveTo(306, 102, 268, 66, 212, 42);
+      ctx.bezierCurveTo(208, 96, 200, 152, 220, 206);
+      ctx.quadraticCurveTo(192, 232, 214, 272);
+      ctx.bezierCurveTo(206, 340, 224, 408, 256, 468);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#5c4338';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // Soft highlight fluff lines
+      ctx.beginPath();
+      ctx.moveTo(276, 360);
+      ctx.quadraticCurveTo(306, 276, 286, 198);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+
+      return c.toDataURL('image/png');
+    }
+
+    async function detectEyesOnImage(base64Data, mimeType) {
+      try {
+        const apiKey = getGeminiApiKey();
+        const models = ['gemini-2.5-flash-preview-09-2025', 'gemini-2.5-flash'];
+        const payload = {
+          contents: [{
+            role: 'user',
+            parts: [
+              { text: 'Detect the exact tight bounding boxes of the character\'s left eye opening and right eye opening in [ymin, xmin, ymax, xmax] format scaled 0 to 1000 (where 0 is top/left edge and 1000 is bottom/right edge of the image). Also return eyelid skin hex color (skinHex), eye sclera white hex color (scleraHex), and upper eyelash hex color (lashHex).' },
+              { inlineData: { mimeType: mimeType || 'image/png', data: base64Data } }
+            ]
+          }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                leftEyeBox: { type: 'ARRAY', items: { type: 'NUMBER' } },
+                rightEyeBox: { type: 'ARRAY', items: { type: 'NUMBER' } },
+                skinHex: { type: 'STRING' },
+                scleraHex: { type: 'STRING' },
+                lashHex: { type: 'STRING' }
+              }
+            }
+          }
+        };
+        for (const model of models) {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) continue;
+          const json = await res.json();
+          const txt = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!txt) continue;
+          const parsed = JSON.parse(txt);
+          if (Array.isArray(parsed.leftEyeBox) && parsed.leftEyeBox.length === 4 &&
+              Array.isArray(parsed.rightEyeBox) && parsed.rightEyeBox.length === 4) {
+            const [ly1, lx1, ly2, lx2] = parsed.leftEyeBox.map(v => v / 1000);
+            const [ry1, rx1, ry2, rx2] = parsed.rightEyeBox.map(v => v / 1000);
+            const eyeW = Math.max(0.008, ((Math.abs(lx2 - lx1) + Math.abs(rx2 - rx1)) / 4));
+            const eyeH = Math.max(0.006, ((Math.abs(ly2 - ly1) + Math.abs(ry2 - ry1)) / 4));
+            return {
+              eyeLX: (lx1 + lx2) / 2,
+              eyeLY: (ly1 + ly2) / 2,
+              eyeRX: (rx1 + rx2) / 2,
+              eyeRY: (ry1 + ry2) / 2,
+              eyeW,
+              eyeH,
+              eyeR: (eyeW + eyeH) / 2,
+              skinHex: parsed.skinHex || '#ffe9dc',
+              scleraHex: parsed.scleraHex || '#fcf9f7',
+              lashHex: parsed.lashHex || '#3a2822'
+            };
+          }
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function generateModularAiLive2D() {
+      if (!document.getElementById('ai-consent-checkbox').checked) {
+        showToast('請先勾選授權同意喔！');
+        return;
+      }
+
+      const btn = document.getElementById('btn-generate-ai');
+      const loadBox = document.getElementById('ai-loading-box');
+      const loadText = document.getElementById('ai-loading-text');
+      const styleDesc = document.getElementById('ai-style-input').value.trim() || '日系可愛動漫風';
+      const generatingFoxGirl = state.isFoxGirl || pendingFoxGirlEvolve;
+
+      btn.disabled = true;
+      loadBox.classList.remove('hidden');
+
+      try {
+        const formDesc = generatingFoxGirl
+          ? `1girl, solo, ONLY ONE SINGLE female anime kitsune shrine maiden standing alone in the center; tall slender graceful 6.5-head anime proportion, hair and sleek fox ears in color ${state.furColor}, standing front-facing symmetrically in ornate Japanese gold-trimmed furisode kimono with flowing sleeves, delicate shrine hair ornaments, gentle alluring anime eyes, flowing long hair. STRICTLY ZERO TAILS (do NOT draw any fox tails). STRICTLY ONE PERSON ONLY, NO multiple characters, NO lineup, NO character sheet, NO duplicates`
+          : `solo, ONLY ONE SINGLE ultra-adorable squishy chibi anime baby fox spirit sitting alone in the center; fur color ${state.furColor} blending smoothly into a soft white pear-shaped fluffy body, wide sloped-down fluffy ears with gold-purple diamond shrine ear ornaments, tiny white dot eyebrows, chubby cute paws, front-facing symmetrically. STRICTLY ZERO TAILS (do NOT draw any tails). STRICTLY ONE FOX ONLY, NO multiple foxes, NO character sheet, NO duplicates`;
+
+        // STEP 1: Seamless Full-Body Character (Head+Ears+Body completely unified, ZERO tails -> zero neck mismatch!)
+        loadText.textContent = '步驟 1/3：正在生成單人無縫角色本體（不含尾巴）…🎨';
+        const master = await callGeminiImage([
+          { text: `Japanese anime full-body character illustration of STRICTLY ONE SINGLE SOLO CHARACTER centered on a pure solid #FFFFFF white background with generous white margins. CRITICAL RULES: ONLY ONE character in the entire image, NO group, NO lineup, NO multiple views, NO character sheet, NO duplicates, NO background props, NO aura, STRICTLY ZERO TAILS. Character details: ${formDesc}. Style: ${styleDesc}. Crisp anime lineart, cel shading.` }
+        ], generatingFoxGirl ? '3:4' : '1:1');
+        const masterInline = { inlineData: { mimeType: master.mimeType, data: master.data } };
+
+        // STEP 2: Sequential Independent Plush Tail (with text-only & procedural fallbacks so Step 1 is never wasted!)
+        loadText.textContent = '步驟 2/3：正在獨立生成「雲朵蓬鬆大尾巴」…🌀';
+        let tailPng = null;
+        try {
+          const tailRaw = await callGeminiImage([
+            { text: `Live2D VTuber independent modular asset matching this character's exact fur color (${state.furColor}) and art style: Draw ONLY ONE SINGLE lush, thick, cloud-like naturally curved fluffy anime fox tail pointing upward with a soft creamy-white feathered tip and extra extended fur root at the bottom for seamless attachment. Pure solid #FFFFFF white background, centered. STRICTLY NO character, NO body, NO face, NO multiple tails.` },
+            masterInline
+          ], '1:1');
+          tailPng = await removeWhiteBg(tailRaw.dataUrl);
+        } catch (tailImgErr) {
+          console.warn('Tail img2img failed, retrying text-only tail:', tailImgErr);
+          try {
+            const tailFallbackRaw = await callGeminiImage([
+              { text: `Japanese anime Live2D asset on pure solid #FFFFFF white background: ONLY ONE SINGLE lush, thick, cloud-like naturally curved fluffy fox tail in fur color ${state.furColor} blending into a soft creamy-white feathered tip, pointing upward with extra extended fur root at the bottom. Style: ${styleDesc}. Crisp anime lineart, cel shading. NO character, NO body, NO multiple tails.` }
+            ], '1:1');
+            tailPng = await removeWhiteBg(tailFallbackRaw.dataUrl);
+          } catch (tailTxtErr) {
+            console.warn('Tail text-only failed, using procedural plush tail fallback:', tailTxtErr);
+            tailPng = createFallbackPlushTailDataUrl(state.furColor);
+          }
+        }
+
+        // STEP 3: Background removal & assembly (eye rig detection only for animal form; Fox Girl keeps clean static eyes)
+        loadText.textContent = '步驟 3/3：正在去背並組裝至 Live2D 引擎…✨';
+        const bodyPng = await removeWhiteBg(master.dataUrl);
+        const eyeRig = !generatingFoxGirl
+          ? await detectEyesOnImage(master.data, master.mimeType)
+          : null;
+
+        if (pendingFoxGirlEvolve) {
+          state.isFoxGirl = true;
+          state.canEvolveFoxGirl = false;
+          pendingFoxGirlEvolve = false;
+        }
+        state.aiParts = { body: bodyPng, tail: tailPng };
+        state.aiRig = eyeRig;
+        state.useAiLive2D = true;
+        saveState();
+        renderPetAppearance();
+        renderUI();
+        showToast(state.isFoxGirl ? '🌸 恭喜進化！專屬九尾狐娘 Live2D 生成完成！' : '✨ 專屬獨立多尾 Live2D 生成完成！');
+        setSpeech(state.isFoxGirl
+          ? '主人…謝謝你一直以來的照顧，我終於化為人形陪伴在你身邊了！🌸🦊'
+          : '哇～我的全新 Live2D 外觀完成啦！✨🦊');
+      } catch (err) {
+        console.error('AI Live2D generation error:', err);
+        if (err && err.status === 401) {
+          const det = document.getElementById('ai-key-details');
+          if (det) det.open = true;
+          showToast('驗證逾時 (HTTP 401)，請再點一次重試或在「進階設定」填入 Gemini API Key');
+        } else {
+          showToast(`生成失敗：${err?.message || '請稍後再試一次'}`);
+        }
+      } finally {
+        btn.disabled = false;
+        loadBox.classList.add('hidden');
+      }
+    }
+
+    // Smooth 60fps Seamless Character + 1~9 Independent Tails Renderer (Eye-ONLY mouse tracking + Natural Blinking)
+    function startModular25DLoop() {
+      const canvas = document.getElementById('ai-25d-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let lastTime = performance.now();
+
+      function frame(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        const t = now / 1000;
+
+        if (state.useAiLive2D && engine25D.imgs.body) {
+          engine25D.smoothX += (engine25D.pointerX - engine25D.smoothX) * 0.14;
+          engine25D.smoothY += (engine25D.pointerY - engine25D.smoothY) * 0.14;
+          engine25D.explodeProgress += ((engine25D.explodeMode ? 1 : 0) - engine25D.explodeProgress) * 0.12;
+
+          // Spring-damper interaction physics
+          engine25D.bounceVel = (engine25D.bounceVel - engine25D.bounceY * 0.18) * 0.80;
+          engine25D.bounceY += engine25D.bounceVel;
+          engine25D.tailBoost *= 0.96;
+
+          // Natural random blink timer
+          if (t >= engine25D.nextBlinkAt) {
+            engine25D.blinkState = Math.min(1, engine25D.blinkState + dt * 14);
+            if (t >= engine25D.nextBlinkAt + 0.14) {
+              engine25D.blinkState = Math.max(0, engine25D.blinkState - dt * 14);
+              if (engine25D.blinkState <= 0) {
+                engine25D.nextBlinkAt = t + 3.0 + Math.random() * 2.5;
+              }
+            }
+          }
+
+          const W = canvas.width;
+          const H = canvas.height;
+          ctx.clearRect(0, 0, W, H);
+
+          const ex = engine25D.explodeProgress;
+          const breatheY = Math.sin(t * 1.85) * 2.6;
+          const bounceY = engine25D.bounceY;
+          const m = engine25D.metrics;
+
+          const bodyImg = engine25D.imgs.body;
+          const tailImg = engine25D.imgs.tail;
+          const bBox = m?.body || { minX: 110, minY: 40, maxX: 402, maxY: 490, w: 292, h: 450, topX: 256, botX: 256 };
+          const tBox = m?.tail || { minX: 140, minY: 40, maxX: 372, maxY: 470, w: 232, h: 430, topX: 256, botX: 256 };
+          const userScale = state.charScale || 1.0;
+          const userOffsetY = (state.charOffsetY || 0) * (H / Math.max(1, state.stageHeight || 420));
+          const userTailScale = state.aiTailScale || 1.0;
+
+          // Fit seamless character nicely in center preserving true aspect ratio, scaled by player preference
+          const maxCharH = (state.isFoxGirl ? H * 0.80 : H * 0.58);
+          const maxCharW = W * 0.72;
+          const charScale = Math.min(maxCharH / Math.max(1, bBox.h), maxCharW / Math.max(1, bBox.w)) * userScale;
+          const drawnCharH = bBox.h * charScale;
+          const charBottomY = H * 0.91 + breatheY + bounceY + userOffsetY;
+          const charCenterX = W * 0.5;
+          const imgDrawX = charCenterX - ((bBox.minX + bBox.maxX) / 2) * charScale;
+          const imgDrawY = charBottomY - bBox.maxY * charScale;
+
+          // LAYER 1 (BACK): 1..9 Independent Cloud-Like Tails (Calm natural wave sway)
+          if (tailImg) {
+            const count = state.isFoxGirl ? 9 : state.tails;
+            const spread = count === 1 ? 0 : Math.min(2.2, 0.72 + (count - 1) * 0.185);
+            const tailPivotX = charCenterX;
+            const tailPivotY = charBottomY - drawnCharH * 0.30;
+            const targetTailH = (state.isFoxGirl ? Math.min(H * 0.50, drawnCharH * 0.66) : H * 0.42 * userScale) * userTailScale;
+            const tailScale = targetTailH / Math.max(1, tBox.h);
+
+            for (let i = 0; i < count; i++) {
+              const frac = count === 1 ? 0.35 : (i / (count - 1)) - 0.5;
+              const baseAngle = count === 1 ? 0.58 : frac * spread;
+              const spd = 1.05 + engine25D.tailBoost * 2.6;
+              const amp = 0.036 + engine25D.tailBoost * 0.055;
+              const wave = Math.sin(t * spd + i * 0.72) * amp;
+              const lenMult = 0.88 + (1 - Math.abs(frac) * 1.05) * 0.18;
+
+              ctx.save();
+              ctx.translate(tailPivotX + frac * ex * 115, tailPivotY + ex * 20);
+              ctx.rotate(baseAngle + wave);
+              ctx.scale(tailScale * lenMult, tailScale * lenMult);
+              ctx.drawImage(tailImg, -tBox.botX, -tBox.maxY);
+              ctx.restore();
+            }
+          }
+
+          // LAYER 2 (FRONT): Seamless Full-Body Character + Parented Eye Layer (100% locked to body transform!)
+          const breatheScaleY = 1 + Math.sin(t * 1.85) * 0.007;
+          const bodyOriginX = -(bBox.minX + bBox.maxX) / 2;
+          const bodyOriginY = -bBox.maxY;
+
+          ctx.save();
+          ctx.translate(charCenterX, charBottomY);
+          ctx.scale(charScale, charScale * breatheScaleY);
+          ctx.drawImage(bodyImg, bodyOriginX, bodyOriginY);
+
+          // Animal form AI model only: subtle eye glint + natural blinking (Fox Girl has NO eye tracking)
+          const rig = state.aiRig;
+          if (!state.isFoxGirl && rig && typeof rig.eyeLX === 'number' && typeof rig.eyeRX === 'number') {
+            const eL = {
+              x: bodyOriginX + rig.eyeLX * bodyImg.width,
+              y: bodyOriginY + rig.eyeLY * bodyImg.height
+            };
+            const eR = {
+              x: bodyOriginX + rig.eyeRX * bodyImg.width,
+              y: bodyOriginY + rig.eyeRY * bodyImg.height
+            };
+            const er = Math.max(4, (rig.eyeR || 0.022) * bodyImg.width);
+
+            if (engine25D.blinkState < 0.35) {
+              ctx.save();
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+              [eL, eR].forEach(pt => {
+                ctx.beginPath();
+                ctx.arc(pt.x + engine25D.smoothX * er * 0.32, pt.y + engine25D.smoothY * er * 0.22 - er * 0.15, er * 0.24, 0, Math.PI * 2);
+                ctx.fill();
+              });
+              ctx.restore();
+            }
+
+            if (engine25D.blinkState > 0.05) {
+              ctx.save();
+              ctx.fillStyle = rig.skinHex || '#ffe9dc';
+              ctx.strokeStyle = '#4a3730';
+              ctx.lineWidth = 2.2;
+              [eL, eR].forEach(pt => {
+                ctx.beginPath();
+                ctx.ellipse(pt.x, pt.y, er * 1.25, er * 0.95 * engine25D.blinkState, 0, 0, Math.PI * 2);
+                ctx.fill();
+                if (engine25D.blinkState > 0.55) {
+                  ctx.beginPath();
+                  ctx.moveTo(pt.x - er * 1.1, pt.y + er * 0.15);
+                  ctx.quadraticCurveTo(pt.x, pt.y + er * 0.5, pt.x + er * 1.1, pt.y + er * 0.15);
+                  ctx.stroke();
+                }
+              });
+              ctx.restore();
+            }
+          }
+          ctx.restore();
+
+          // Optional Layer/Rig Debug Overlay
+          if (engine25D.showRig) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(imgDrawX + bBox.minX * charScale, imgDrawY + bBox.minY * charScale, bBox.w * charScale, bBox.h * charScale);
+            ctx.fillStyle = '#ec4899';
+            ctx.beginPath();
+            ctx.arc(charCenterX, charBottomY - drawnCharH * 0.30, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // =========================================================================
+    // 12. TIME MACHINE, SAVE BACKUP & RENAME MODALS
+    // =========================================================================
+    function toggleTimeMachine() {
+      document.getElementById('time-machine-panel').classList.toggle('hidden');
+    }
+
+    function tmAdvanceHours(h) {
+      simulateElapsedMs(h * HOUR_MS);
+      saveState();
+      renderUI();
+      showToast(`⏳ 時光機已快轉 ${h} 小時`);
+    }
+
+    function tmResetCooldowns() {
+      state.feedTimestamps = [];
+      state.playTimestamps = [];
+      state.lastBathAt = 0;
+      saveState();
+      renderUI();
+      showToast('✅ 所有餵食、玩耍與洗澡冷卻已重置！');
+    }
+
+    function tmAddIntimacy(amt) {
+      if (state.status !== 'alive') return;
+      state.intimacy = Math.min(100, state.intimacy + amt);
+      checkEvolution();
+      saveState();
+      renderUI();
+      showToast(`💖 親密度 +${amt}%`);
+    }
+
+    function tmAddFeeds(amt) {
+      if (state.status !== 'alive') return;
+      state.stageFeeds += amt;
+      state.totalFeeds += amt;
+      checkEvolution();
+      saveState();
+      renderUI();
+      showToast(`🍙 餵食經驗 +${amt}`);
+    }
+
+    function tmJumpNineTails() {
+      state.status = 'alive';
+      state.tails = 9;
+      state.isFoxGirl = false;
+      state.stageFeeds = 0;
+      state.intimacy = Math.max(state.intimacy, 85);
+      state.hunger = Math.max(state.hunger, 80);
+      state.cleanliness = Math.max(state.cleanliness, 85);
+      state.hungerZeroSince = null;
+      state.bothZeroSince = null;
+      saveState();
+      renderPetAppearance();
+      renderUI();
+      setSpeech('九尾力量覺醒啦！繼續餵食就能迎接最終進化喔！🦊✨');
+      showToast('🦊 已跳至九尾階段！');
+    }
+
+    function tmJumpFoxGirl() {
+      state.status = 'alive';
+      state.tails = 9;
+      state.canEvolveFoxGirl = true;
+      state.stageFeeds = FOX_GIRL_HIDDEN_FEEDS_REQ;
+      state.totalFeeds = Math.max(state.totalFeeds, 180);
+      state.intimacy = 100;
+      state.hunger = 100;
+      state.cleanliness = 100;
+      state.hungerZeroSince = null;
+      state.bothZeroSince = null;
+      playTone(['E5', 'G#5', 'B5', 'E6'], '8n');
+      spawnFloatingFX(['🌸', '✨', '🌙', '🦋'], 10);
+      saveState();
+      renderPetAppearance();
+      renderUI();
+      openEvolveFoxGirlModal();
+    }
+
+    function resetPetLife() {
+      const keepFur = state.furColor;
+      const keepPatches = state.patches;
+      state = createDefaultState();
+      state.furColor = keepFur;
+      state.patches = keepPatches;
+      saveState();
+      renderPetAppearance();
+      renderUI();
+      setSpeech('嗚呼～全新的小狐狸來到你身邊了！請多多照顧我喔！🦊✨');
+    }
+
+    function openSaveModal() { document.getElementById('save-modal').classList.remove('hidden'); }
+    function closeSaveModal() { document.getElementById('save-modal').classList.add('hidden'); }
+
+    function exportSaveFile() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fox_pet_save_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📤 存檔已匯出，可上傳至 Google 雲端硬碟備份！');
+    }
+
+    function importSaveFile(evt) {
+      const file = evt.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (typeof parsed.hunger !== 'number') throw new Error('Invalid save');
+          state = { ...createDefaultState(), ...parsed };
+          saveState();
+          renderPetAppearance();
+          renderUI();
+          closeSaveModal();
+          showToast('📥 存檔匯入成功！進度已復原');
+        } catch (e) {
+          showToast('存檔格式錯誤，無法讀取');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmHardReset() {
+      openConfirmModal('確定要清空所有養成紀錄與外觀，重新開始嗎？', () => {
+        state = createDefaultState();
+        saveState();
+        renderPetAppearance();
+        renderUI();
+        closeSaveModal();
+        showToast('已重置所有進度');
+      });
+    }
+
+    function openRenameModal() {
+      document.getElementById('rename-input').value = state.name;
+      document.getElementById('rename-modal').classList.remove('hidden');
+    }
+    function closeRenameModal() { document.getElementById('rename-modal').classList.add('hidden'); }
+    function applyRename() {
+      const val = document.getElementById('rename-input').value.trim();
+      if (val) {
+        state.name = val;
+        saveState();
+        renderUI();
+      }
+      closeRenameModal();
+    }
+
+    // =========================================================================
+    // 13. INITIALIZATION
+    // =========================================================================
+    function initSakuraPetals() {
+      const layer = document.getElementById('sakura-layer');
+      if (!layer) return;
+      for (let i = 0; i < 12; i++) {
+        const p = document.createElement('div');
+        p.className = 'sakura-petal';
+        p.style.left = `${Math.random() * 95}%`;
+        p.style.setProperty('--dur', `${7 + Math.random() * 6}s`);
+        p.style.setProperty('--delay', `${Math.random() * 7}s`);
+        layer.appendChild(p);
+      }
+    }
+
+    window.onload = function () {
+      loadState();
+      try {
+        const savedKey = localStorage.getItem('fox_pet_custom_gemini_key') || '';
+        const keyInput = document.getElementById('ai-custom-apikey');
+        if (keyInput && savedKey) keyInput.value = savedKey;
+      } catch (e) {}
+      buildFurPresets();
+      initSakuraPetals();
+      initPatchDrawing();
+      syncRealTime();
+      renderPetAppearance();
+      renderUI();
+      initLive2DEffects();
+      window.addEventListener('resize', () => {
+        applyStageUserTransform();
+      });
+      setInterval(syncRealTime, 15000);
+    };
+  </script>
+</body>
+</html>
